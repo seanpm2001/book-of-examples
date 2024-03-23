@@ -8,8 +8,6 @@ interface PRNG
     ]
     imports []
 
-
-
 Generator state value : state -> (state, value)
 
 generate : state, Generator state value -> (state, value)
