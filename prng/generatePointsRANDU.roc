@@ -1,6 +1,6 @@
 app "generatePointsRANDU"
     packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.8.1/x8URkvfyi9I0QhmVG98roKBUs_AZRkLFwFJVJ3942YA.tar.br" }
-    imports [pf.Stdout, RANDU, TestGenerators, RandomTools, PRNG]
+    imports [pf.Stdout, TestGenerators, RandomTools, PRNG, RANDU]
     provides [main] to pf
 
 main =
@@ -20,8 +20,9 @@ generatePoint = \state0, generator ->
     (state3, { x, y, z })
 
 expect
-    (_, p) = generatePoint 1 TestGenerators.generateInc
-    p == { x: 1, y: 2, z: 3 }
+    generatePoint 1 TestGenerators.generateInc
+    |> PRNG.result
+    |> Bool.isEq { x: 1, y: 2, z: 3 }
 
 generatePoints = \state0, generator, len ->
     RandomTools.generateList state0 (\s -> generatePoint s generator) len

@@ -33,9 +33,9 @@ generateCycle = \{ items, idx } ->
 
 expect
     s = { items: [1, 2, 3], idx: 0 }
-    result =
-        List.range { start: At 0, end: Before 10 }
-        |> List.walk { state: s, items: [] } \{ state, items }, _ ->
-            (newState, x) = generateCycle state
-            { state: newState, items: List.append items x }
-    result.items == [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]
+    List.range { start: At 0, end: Before 10 }
+    |> List.walk { state: s, items: [] } \{ state, items }, _ ->
+        (newState, x) = generateCycle state
+        { state: newState, items: List.append items x }
+    |> .items
+    |> Bool.isEq [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]

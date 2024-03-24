@@ -29,8 +29,9 @@ generateList = \state, generator, len ->
     generateListStep state []
 
 expect
-    (_, xs) = generateList 1 TestGenerators.generateInc 10
-    xs == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    generateList 1 TestGenerators.generateInc 10
+    |> PRNG.result
+    |> Bool.isEq [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 expect
     (_, xs) = generateList { items: [1, 2, 3], idx: 0 } TestGenerators.generateCycle 10
     xs == [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]
@@ -83,11 +84,13 @@ generateU32UpTo = \state, g32, limit ->
         _ -> tryU32 state
 
 expect
-    (_, x) = generateU32UpTo 1 TestGenerators.generateInc 5
-    x == 1
+    generateU32UpTo 1 TestGenerators.generateInc 5
+    |> PRNG.result
+    |> Bool.isEq 1
 expect
-    (_, xs) = generateList 1 (\s -> generateU32UpTo s TestGenerators.generateInc 3) 10
-    xs == [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
+    generateList 1 (\s -> generateU32UpTo s TestGenerators.generateInc 3) 10
+    |> PRNG.result
+    |> Bool.isEq [1, 2, 0, 1, 2, 0, 1, 2, 0, 1]
 
 generateU64UpTo : state, BaseGenerator state, U64 -> (state, U64)
 generateU64UpTo = \state, g32, limit ->
@@ -110,7 +113,7 @@ expect
 expect
     limit = 3
     (_, xs) = generateList 1 (\s -> generateU64UpTo s TestGenerators.generateInc limit) 10
-    Bool.true == List.all xs (\x -> x < limit)
+    List.all xs (\x -> x < limit)
 
 shuffle : state, BaseGenerator state, List a -> (state, List a)
 shuffle = \s, g32, xs ->
@@ -129,5 +132,6 @@ actuallyShuffle = \state, g32, xs ->
             (newState, List.swap ys idx j)
 
 expect
-    (_, xs) = shuffle 1 TestGenerators.generateInc [1, 2, 3, 4]
-    xs == [2, 3, 1, 4]
+    shuffle 1 TestGenerators.generateInc [1, 2, 3, 4]
+    |> PRNG.result
+    |> Bool.isEq [2, 3, 1, 4]
