@@ -1,0 +1,11 @@
+{%- comment -%}
+Build the bibliography based on `_data/references.yml`.
+{%- endcomment -%}
+<ul class="references">
+{% for entry in site.data.references %}
+  <li id="{{ entry.key }}">
+    {{ entry.author }}: {{ entry.title }}.
+    {% if entry.url %}<a href="{{ entry.url }}">{{ entry. url }}</a>{% endif %}
+  </li>
+{% endfor %}
+</ul>
