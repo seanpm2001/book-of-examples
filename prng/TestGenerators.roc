@@ -12,17 +12,17 @@ generateInc = \s -> ((s + 1), s)
 
 expect
     s0 = 0
-    (s1, x) = PRNG.generate s0 generateInc
-    (s2, y) = PRNG.generate s1 generateInc
-    (_s, z) = PRNG.generate s2 generateInc
+    (s1, x) = generateInc s0 
+    (s2, y) = generateInc s1 
+    (_s, z) = generateInc s2 
     [x, y, z] == [0, 1, 2]
 
 generateConstant : PRNG.Generator U32 U32
 generateConstant = \s -> (s, s)
 expect
     s0 = 0
-    (s1, x) = PRNG.generate s0 generateConstant
-    (_s, y) = PRNG.generate s1 generateConstant
+    (s1, x) = generateConstant s0
+    (_s, y) = generateConstant s1
     [x, y] == [0, 0]
 
 ## NB: The type annotation I had for this was causing a compiler error

@@ -5,8 +5,8 @@ app "generatePointsRANDU"
 
 main =
     generator = RANDU.create 1
-    (_, pts) = generatePoints generator RANDU.generate 1000
-    pts
+    generatePoints generator RANDU.generate 1000
+    |> PRNG.result
     |> format3dPoints
     |> Stdout.line
 
@@ -28,7 +28,8 @@ generatePoints = \state0, generator, len ->
     RandomTools.generateList state0 (\s -> generatePoint s generator) len
 
 expect
-    (_, pts) = generatePoints 1 TestGenerators.generateInc 2
+    pts = generatePoints 1 TestGenerators.generateInc 2
+        |> PRNG.result
     pts == [{ x: 1, y: 2, z: 3 }, { x: 4, y: 5, z: 6 }]
 
 format3dPoint = \{ x, y, z } ->

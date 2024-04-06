@@ -12,7 +12,7 @@ interface RandomTools
 BaseGenerator state : PRNG.Generator state U32
 
 generateU32 : state, BaseGenerator state -> (state, U32)
-generateU32 = \state, generator -> PRNG.generate state generator
+generateU32 = \state, generator -> generator state
 expect
     (s1, x) = generateU32 1 TestGenerators.generateInc
     (_s2, y) = generateU32 s1 TestGenerators.generateInc
@@ -24,7 +24,7 @@ generateList = \state, generator, len ->
         if (List.len acc) >= len then
             (s, acc)
         else
-            (nextState, n) = PRNG.generate s generator
+            (nextState, n) = generator s
             generateListStep nextState (List.append acc n)
     generateListStep state []
 
@@ -33,7 +33,8 @@ expect
     |> PRNG.result
     |> Bool.isEq [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 expect
-    (_, xs) = generateList { items: [1, 2, 3], idx: 0 } TestGenerators.generateCycle 10
+    xs = generateList { items: [1, 2, 3], idx: 0 } TestGenerators.generateCycle 10
+        |> PRNG.result
     xs == [1, 2, 3, 1, 2, 3, 1, 2, 3, 1]
 
 makeU64 : U32, U32 -> U64
@@ -54,12 +55,13 @@ expect
 
 generateU64 : state, BaseGenerator state -> (state, U64)
 generateU64 = \state, generator ->
-    (s1, a) = PRNG.generate state generator
-    (s2, b) = PRNG.generate s1 generator
+    (s1, a) = generator state
+    (s2, b) = generator s1
     (s2, makeU64 a b)
 
 expect
-    (_, x) = generateU64 1 TestGenerators.generateInc
+    x = generateU64 1 TestGenerators.generateInc
+        |> PRNG.result
     x == 0b00000000_00000000_00000000_00000010_00000000_00000000_00000000_00000001
 
 rejectForModuloBias = \generated, limit, maxvalue ->
@@ -108,11 +110,13 @@ generateU64UpTo = \state, g32, limit ->
 
 expect
     limit = 5
-    (_, x) = generateU64UpTo 1 TestGenerators.generateInc limit
+    x = generateU64UpTo 1 TestGenerators.generateInc limit
+        |> PRNG.result
     x == 0b00000000_00000000_00000000_00000010_00000000_00000000_00000000_00000001 % limit
 expect
     limit = 3
-    (_, xs) = generateList 1 (\s -> generateU64UpTo s TestGenerators.generateInc limit) 10
+    xs = generateList 1 (\s -> generateU64UpTo s TestGenerators.generateInc limit) 10
+        |> PRNG.result
     List.all xs (\x -> x < limit)
 
 shuffle : state, BaseGenerator state, List a -> (state, List a)

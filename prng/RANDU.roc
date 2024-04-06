@@ -1,8 +1,8 @@
 interface RANDU
     exposes
     [
-        create,
         generate,
+        create,
         State,
     ]
     imports [PRNG]

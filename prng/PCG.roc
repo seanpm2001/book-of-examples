@@ -36,7 +36,6 @@ generate = \@State s0 ->
     x = Num.bitwiseXor s0 (Num.shiftRightZfBy s0 18)
     value = rotr32 (Num.shiftRightZfBy x 27 |> Num.toU32) count
     s1 = newState s0
-
     (@State s1, value)
 
 expect
