@@ -1,7 +1,7 @@
 # Pseudo-Random Number Generator
 
 This chapter builds a small suite of random generation tools on top of
-32-bit psueod-random number generators. It covers passing state in
+32-bit pseudo-random number generators. It covers passing state in
 immutable programs, detailed integer arithmetic, and opaque types.
 
 Except where otherwise noted, I've got working code for all of these sections.
