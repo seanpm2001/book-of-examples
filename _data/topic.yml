@@ -81,6 +81,11 @@
   github:
   - "agu-z"
 
+- slug: "prng"
+  title: "Pseudorandom Number Generator"
+  github:
+  - "nathanielknight"
+
 - slug: "proptest"
   title: "Property-Based Testing"
   github:

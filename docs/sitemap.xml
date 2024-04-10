@@ -34,6 +34,9 @@
 <loc>/book-of-examples/diff/</loc>
 </url>
 <url>
+<loc>/book-of-examples/parser/</loc>
+</url>
+<url>
 <loc>/book-of-examples/svg/</loc>
 </url>
 <url>
@@ -61,7 +64,7 @@
 <loc>/book-of-examples/</loc>
 </url>
 <url>
-<loc>/book-of-examples/parser/</loc>
+<loc>/book-of-examples/prng/</loc>
 </url>
 <url>
 <loc>/book-of-examples/ftp/</loc>

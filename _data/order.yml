@@ -3,6 +3,7 @@ chapters:
 - backup
 - diff
 - json
+- prng
 - binary
 - ci
 - editor
