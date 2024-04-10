@@ -25,4 +25,4 @@ expect
     (r2, x) = generate r1
     (r3, y) = generate r2
     (_, z) = generate r3
-    [x, y, z] == [1, 65539, 393225]
+    (x, y, z) == (1, 65539, 393225)

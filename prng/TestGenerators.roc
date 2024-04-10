@@ -15,7 +15,7 @@ expect
     (s1, x) = generateInc s0 
     (s2, y) = generateInc s1 
     (_s, z) = generateInc s2 
-    [x, y, z] == [0, 1, 2]
+    (x, y, z) == (0, 1, 2)
 
 generateConstant : PRNG.Generator U32 U32
 generateConstant = \s -> (s, s)
@@ -23,7 +23,7 @@ expect
     s0 = 0
     (s1, x) = generateConstant s0
     (_s, y) = generateConstant s1
-    [x, y] == [0, 0]
+    (x, y) == (0, 0)
 
 ## NB: The type annotation I had for this was causing a compiler error
 generateCycle = \{ items, idx } ->
