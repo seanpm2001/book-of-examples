@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Software Design by Example in Roc</title>
+<link rel="shortcut icon" type="image/x-icon" href="/book-of-examples/favicon.svg">
+<link rel="stylesheet" href="/book-of-examples/bw.css" type="text/css">
+<link rel="stylesheet" href="/book-of-examples/site.css" type="text/css">
+
+  </head>
+  <body>
+    <main>
+      <h1>Continuous Integration</h1>
+<p class="author">Written by <a href="https://github.com/jwoudenberg">Jasper Woudenberg</a>
+</p>
+
+<h2 id="outline">Outline</h2>
+
+<ul>
+  <li>Start with designing some of the APIs, using types to test/communicate ideas</li>
+  <li>Implementation following the ‘scoping of CI system’ section below
+I’d like to avoid platforms as much as possible in this section</li>
+  <li>End with packaging the work up using a Roc platform</li>
+</ul>
+
+<h2 id="platforms-in-this-chapter">Platforms in this chapter</h2>
+
+<p>The real system I hope to evolve this into will be a Roc platform for CI systems, and I think it could be a nice example of why platforms are a cool idea.
+Roc platforms are not themselves written in Roc, so the work building the platform is not suitable material for this book.</p>
+
+<p>I plan to use the basic-cli platform to get running code at the end of the chapter.
+That will amount to “add a platform to turn Roc into something actually usable”, which doesn’t communicate why platforms are useful.
+For that reason I think it makes sense to avoid focusing on platforms in this chapter.</p>
+
+<h2 id="scoping-of-the-ci-system-created-in-the-chapter">Scoping of the CI system created in the chapter</h2>
+
+<p>🔭 out of scope for this chapter
+✂️ opportunities to cut scope further</p>
+
+<ul>
+  <li>Create an API for writing CI jobs in Roc, consisting of multiple CI steps
+    <ul>
+      <li>Steps can define inputs and outputs</li>
+      <li>Steps can take outputs from other steps, introducing an order dependency</li>
+      <li>Steps can run system commands
+🔭 Designing Roc-wrappers for tools commonly used in CI (git/go/rspec/..)</li>
+      <li>✂️ Steps run in an environment
+🔭 Defining environments in other ways than through a Dockerfile</li>
+      <li>🔭 Caching</li>
+    </ul>
+  </li>
+  <li>Function that takes a step, it’s inputs, and runs it
+    <ul>
+      <li>Capture data about each step
+        <ul>
+          <li>stdout and stderr</li>
+          <li>inputs and ouputs of step</li>
+          <li>start/end times of step
+🔭 capturing more fine-grained timings, such as of commands ran in steps</li>
+          <li>success or failure</li>
+          <li>🔭 capturing test output in a structured format</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Implement functionality for scheduling and running jobs
+    <ul>
+      <li>Taking in requests to run jobs and queue them
+✂️ Deduplicating requests to run the same job with the same inputs in the queue</li>
+      <li>Running a job, by running it’s steps in dependency order</li>
+      <li>Design for allowing work to be distributed across a cluster of CI workers
+🔭 Implementation of clustering is out of scope</li>
+      <li>🔭 support for pull-based jobs (i.e. Github events)</li>
+      <li>🔭 running jobs in parallel</li>
+    </ul>
+  </li>
+  <li>✂️ Some form of human interface for querying CI system progress
+For a real system I’d like this to be a web UI, for the chapter I wonder if a CLI is good enough, or even to punt on this entirely.</li>
+</ul>
+
+    </main>
+    <footer>
+  Copyright © the contributors 2024
+  &middot;
+  <a href="https://github.com/roc-lang/book-of-examples">GitHub repository</a>
+</footer>
+
+  </body>
+</html>

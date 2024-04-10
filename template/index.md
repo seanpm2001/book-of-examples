@@ -1,4 +1,5 @@
-# Template
+---
+---
 
 ## Design
 - When the user runs `compile.roc`, we search for templates ending in `.rtl` (Roc Template Language) in the current directory and load them.

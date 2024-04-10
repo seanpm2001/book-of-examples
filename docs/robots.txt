@@ -1,0 +1,1 @@
+Sitemap: /book-of-examples/sitemap.xml

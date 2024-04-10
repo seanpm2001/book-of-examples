@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Software Design by Example in Roc</title>
+<link rel="shortcut icon" type="image/x-icon" href="/book-of-examples/favicon.svg">
+<link rel="stylesheet" href="/book-of-examples/bw.css" type="text/css">
+<link rel="stylesheet" href="/book-of-examples/site.css" type="text/css">
+
+  </head>
+  <body>
+    <main>
+      <h1>A Text Editor</h1>
+<p class="author">Written by <a href="https://github.com/lukewilliamboswell">Luke Boswell</a>
+</p>
+
+<p><a href="https://github.com/lukewilliamboswell/roc-ansi/blob/main/examples/text-editor.roc">Example code</a></p>
+
+<h2 id="working-with-the-terminal">working with the terminal</h2>
+<ul>
+  <li>introduce <a href="https://github.com/roc-lang/basic-cli">basic-cli</a> dependency</li>
+  <li>background on the terminal
+    <ul>
+      <li>ANSI escape codes control the cursor and colors etc</li>
+      <li>Raw mode to read keypresses</li>
+    </ul>
+  </li>
+  <li>handle any errors using a tag union, and print to STDERR</li>
+  <li>using ANSI escape codes manually
+    <ul>
+      <li>clear the window</li>
+      <li>write out a colored “Hello World” message</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="a-simple-tui-window">a simple TUI window</h2>
+<ul>
+  <li>introduce <a href="https://github.com/lukewilliamboswell/roc-ansi">roc-ansi</a> dependency</li>
+  <li>minimum code needed to create a “window” with a cursor</li>
+  <li>handle <code class="language-plaintext highlighter-rouge">ESC</code> keypress to close and exit</li>
+  <li>introduce <code class="language-plaintext highlighter-rouge">Model</code> and how state is passed between draws</li>
+  <li>introduce a cursor, move it around</li>
+</ul>
+
+<h2 id="read-a-file">read a file</h2>
+<ul>
+  <li>parse file path from command line arguments</li>
+  <li>check file exists, and read contents</li>
+  <li>parse file into <code class="language-plaintext highlighter-rouge">Grapheme</code>s (unicode text segmentation)</li>
+</ul>
+
+<h2 id="display-file-contents">display file contents</h2>
+<ul>
+  <li>introduce a <a href="https://en.wikipedia.org/wiki/Piece_table">Piece Table</a></li>
+  <li>split file into lines <code class="language-plaintext highlighter-rouge">splitIntoLines : List Grapheme, List Grapheme, List (List Grapheme) -&gt; List (List Grapheme)</code></li>
+  <li>draw lines of file into a viewport on the screen</li>
+  <li>only use a single piece table in state i.e.</li>
+</ul>
+
+<pre><code class="language-roc">fileContents: { original : List Grapheme, added : List Grapheme, table : List Entry,}
+</code></pre>
+
+<h2 id="text-editor">text editor</h2>
+<ul>
+  <li>handle vertical scrolling of text in the viewport using a <code class="language-plaintext highlighter-rouge">lineOffset</code></li>
+  <li>map cursor position on screen to a position in the file <code class="language-plaintext highlighter-rouge">calculateCursorIndex : List (List Grapheme), U32, {row : I32, col : I32 }, U64 -&gt; U64</code></li>
+  <li>keep changes between user input in state, use a <code class="language-plaintext highlighter-rouge">history</code> and <code class="language-plaintext highlighter-rouge">future</code> list to keep track of multipl piece tables</li>
+  <li>implement CTRL-S to save file contents to disk</li>
+  <li>implement typing to insert text</li>
+  <li>implement CTRL-Z to undo, and CRTl-Y to redo</li>
+</ul>
+
+    </main>
+    <footer>
+  Copyright © the contributors 2024
+  &middot;
+  <a href="https://github.com/roc-lang/book-of-examples">GitHub repository</a>
+</footer>
+
+  </body>
+</html>

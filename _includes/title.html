@@ -1,0 +1,51 @@
+{%- comment -%}
+Page title.
+{%- endcomment -%}
+
+{%- comment -%}
+Determine the page's slug based on filepath. Cases are:
+1. Root page.
+2. In root directory with trailing underscore.
+3. In subdirectory.
+{%- endcomment -%}
+{%- if page.path == "index.md" -%}
+  {%- assign slug = "@root" -%}
+{%- else -%}
+  {%- assign temp = page.path | split: "/" -%}
+  {%- if temp.size == 1 -%}
+    {%- assign slug = temp[0] | split: "." | first | replace: "_", "" %}
+  {%- else -%}
+    {%- assign slug = temp[0] %}
+  {%- endif -%}
+{%- endif -%}
+
+{%- comment -%}
+Determine page title from slug.
+1. Root page's title is overall site title.
+2. Other pages get titles from `_data/site.topic.yml`.
+{%- endcomment -%}
+{%- if slug == "@root" -%}
+  {%- assign title = site.title -%}
+{%- else -%}
+  {%- assign temp = site.data.topic | find: "slug", slug -%}
+  {%- assign title = temp.title -%}
+{%- endif -%}
+
+{%- comment -%}
+Determine page authors.
+
+1. Chapters' authors are listed in `_data/site.topic.yml`.
+2. Pages not listed there have no authors (e.g., license or glossary).
+{%- endcomment -%}
+{%- if site.data.order.chapters contains slug -%}
+  {%- assign temp = site.data.topic | find: "slug", slug -%}
+  {%- capture authors -%}{% include people.html githubs=temp.github %}{%- endcapture -%}
+{%- else -%}
+  {%- assign authors = nil -%}
+{%- endif -%}
+
+{%- comment -%}
+Construct title and author list (if any).
+{%- endcomment -%}
+<h1>{{ title }}</h1>
+{% if authors -%}<p class="author">Written by {{ authors }}</p>{%- endif %}

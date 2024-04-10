@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Software Design by Example in Roc</title>
+<link rel="shortcut icon" type="image/x-icon" href="/book-of-examples/favicon.svg">
+<link rel="stylesheet" href="/book-of-examples/bw.css" type="text/css">
+<link rel="stylesheet" href="/book-of-examples/site.css" type="text/css">
+
+  </head>
+  <body>
+    <main>
+      <h1>HTML Templates</h1>
+<p class="author">Written by <a href="https://github.com/isaacvando">Isaac Van Doren</a>
+</p>
+
+<h2 id="design">Design</h2>
+<ul>
+  <li>When the user runs <code class="language-plaintext highlighter-rouge">compile.roc</code>, we search for templates ending in <code class="language-plaintext highlighter-rouge">.rtl</code> (Roc Template Language) in the current directory and load them.</li>
+  <li>We then parse each template into a list of nodes, each node being unstructured text, a conditional, an HTML-escaped interpolation, a raw interpolation, or a list. Parsing never fails; if the user makes a syntax error while trying to use one of the template languages features, they will get out plain text instead.</li>
+  <li>We then take the parsed templates and generate a file called <code class="language-plaintext highlighter-rouge">Pages.roc</code> that contains a function corresponding to each template file.</li>
+  <li>Each function accepts a single argument called <code class="language-plaintext highlighter-rouge">model</code>. Normally it is a record, and fields on it are accessed in the template like this <code class="language-plaintext highlighter-rouge">Hello, !</code>, although it could be another type.</li>
+</ul>
+
+<h3 id="type-inference">Type Inference</h3>
+<ul>
+  <li>One of my goals with this template language is to get compile time errors. I want to emphasize in the chapter how great it is that Roc has principal decidable type inference, and that it is completely necessary for us to get compile time errors and nice editor support with this kind of approach.</li>
+  <li>This approach could be used easily in dynamic languages like JS or Python, but then the compile time errors are lost. If we wanted to use the same approach in a language like Java, with compile time errors, we would have to do real type inference on the template to determine the types in order to include them in the function for the template.</li>
+</ul>
+
+<h3 id="parsing">Parsing</h3>
+<ul>
+  <li>I wrote my own parser combinators for this to avoid pulling in another dependency. They do not include errors right now because the whole parsing step never fails. Because at least one other chapter will need similar parsing capabilities, I think it would be good to develop a parser in one chapter and use it in the others.</li>
+  <li>Right now the generated HTML will contain some whitespace weirdness due to the presence of the extra syntax in the templates. This does not impact the way the HTML is rendered (unless using <code class="language-plaintext highlighter-rouge">pre</code>), but it would be nice to have it fixed eventually. I haven’t thought about it a ton, but it might be a bit challenging to handle properly in all cases, and I think it would probably be a distraction from the point of the chapter.</li>
+</ul>
+
+<h3 id="when-is">When-Is</h3>
+<p>I would like to include a syntax for when expressions also:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{|when x |}
+{|is Err NotFound |}
+    Error
+{|is Ok val |}
+    
+{|endwhen|}
+</code></pre></div></div>
+<p>I have not implemented this yet, but I think it should be included if there is enough space. It is probably a fairly uncommmon feature and is necessary for using ADTs nicely in templates.</p>
+
+<h2 id="example">Example</h2>
+<p>To try the example, run <code class="language-plaintext highlighter-rouge">roc ../compile.roc &amp;&amp; roc server.roc</code> in <code class="language-plaintext highlighter-rouge">/example</code>.</p>
+
+<h2 id="other-options-considered">Other options considered</h2>
+<ul>
+  <li>Originally, I wanted the functions to take a destructured record (<code class="language-plaintext highlighter-rouge">page = \{name, email} -&gt;</code>) so that fields could be accessed directly in the template without having to prefix them with <code class="language-plaintext highlighter-rouge">model.</code>. To do this we would have to identify each field being used in the template. This should be doable, but I don’t think it is worth increasing the scope of the chapter to do it.</li>
+  <li>I have a couple of usages of <code class="language-plaintext highlighter-rouge">crash</code> in the code right now. These could be removed, but I am a bit torn because I don’t like presenting errors that won’t actually happen.</li>
+  <li>We could have a <code class="language-plaintext highlighter-rouge">.roc</code> file for each template and then pull them all into a single module which the user imports. This would avoid name conflicts and extra long files, but I don’t think it is necessary or worth the increased scope.</li>
+</ul>
+
+    </main>
+    <footer>
+  Copyright © the contributors 2024
+  &middot;
+  <a href="https://github.com/roc-lang/book-of-examples">GitHub repository</a>
+</footer>
+
+  </body>
+</html>
