@@ -1,4 +1,4 @@
-app "task-usage" packages { 
+app "log-append" packages { 
         cli: "https://github.com/roc-lang/basic-cli/releases/download/0.8.1/x8URkvfyi9I0QhmVG98roKBUs_AZRkLFwFJVJ3942YA.tar.br"
     }
     imports [
@@ -26,8 +26,10 @@ appendToFile = \path, msg ->
     File.writeBytes path (List.concat newBytes existingBytes)
 
 main =
-    log "This is a value:" 42
-    |> Task.onErr handleErr
+    log "This is a value:"
+    Task.onErr
+        (log "This is a value:" 42)
+        handleErr
 
 handleErr = \err ->
     Stdout.line "We found an error: $(Inspect.toStr err)"
