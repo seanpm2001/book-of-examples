@@ -1,3 +1,5 @@
+[book website (WIP)](https://roc-lang.github.io/book-of-examples/)
+
 # Software Design by Example in [Roc][roc]
 
 The best way to learn design in any field is to study examples.
