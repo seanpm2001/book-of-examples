@@ -24,8 +24,10 @@ that most programmers have never encountered.
 | Norbert Hajagos    | HajagosNorbert     | file transfer             | ftp        |
 | Norbert Hajagos    | HajagosNorbert     | discrete event simulation | des        |
 | Stuart Hinson      | stuarth            | pattern matching          | match      |
+| Stuart Hinson      | stuarth            | redis data store          | redis      |
 | Nathaniel Knight   | nathanielknight    | random number generation  | prng       |
 | Monica McGuigan    | monmcguigan        | JSON codec                | json       |
+| Abhinav Sarkar     | abhin4v            | pretty printing           | pretty     |
 | Fabian Schmalzried | FabHof             | binary data packing       | binary     |
 | Isaac Van Doren    | isaacvando         | compression               | compress   |
 | Isaac Van Doren    | isaacvando         | HTML templates            | template   |

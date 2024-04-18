@@ -3,6 +3,7 @@ chapters:
 - backup
 - diff
 - json
+- pretty
 - prng
 - binary
 - ci
@@ -11,6 +12,7 @@ chapters:
 - template
 - svg
 - match
+- redis
 - completion
 - proptest
 - des

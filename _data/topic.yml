@@ -81,6 +81,11 @@
   github:
   - "agu-z"
 
+- slug: "pretty"
+  title: "Pretty Printing"
+  github:
+  - "abhin4v"
+
 - slug: "prng"
   title: "Pseudorandom Number Generator"
   github:
@@ -90,6 +95,11 @@
   title: "Property-Based Testing"
   github:
   - "sophiecollard"
+
+- slug: "redis"
+  title: "A Redis-Like Data Store"
+  github:
+  - "stuarth"
 
 - slug: "references"
   title: "References"
