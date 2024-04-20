@@ -19,65 +19,153 @@
 <h2 id="outline">Outline</h2>
 
 <ul>
-  <li>Start with designing some of the APIs, using types to test/communicate ideas</li>
-  <li>Implementation following the ‘scoping of CI system’ section below
-I’d like to avoid platforms as much as possible in this section</li>
-  <li>End with packaging the work up using a Roc platform</li>
-</ul>
-
-<h2 id="platforms-in-this-chapter">Platforms in this chapter</h2>
-
-<p>The real system I hope to evolve this into will be a Roc platform for CI systems, and I think it could be a nice example of why platforms are a cool idea.
-Roc platforms are not themselves written in Roc, so the work building the platform is not suitable material for this book.</p>
-
-<p>I plan to use the basic-cli platform to get running code at the end of the chapter.
-That will amount to “add a platform to turn Roc into something actually usable”, which doesn’t communicate why platforms are useful.
-For that reason I think it makes sense to avoid focusing on platforms in this chapter.</p>
-
-<h2 id="scoping-of-the-ci-system-created-in-the-chapter">Scoping of the CI system created in the chapter</h2>
-
-<p>🔭 out of scope for this chapter
-✂️ opportunities to cut scope further</p>
-
-<ul>
-  <li>Create an API for writing CI jobs in Roc, consisting of multiple CI steps
+  <li>What is a CI system?
+[OPEN QUESTION] Is this section useful?
     <ul>
-      <li>Steps can define inputs and outputs</li>
-      <li>Steps can take outputs from other steps, introducing an order dependency</li>
-      <li>Steps can run system commands
-🔭 Designing Roc-wrappers for tools commonly used in CI (git/go/rspec/..)</li>
-      <li>✂️ Steps run in an environment
-🔭 Defining environments in other ways than through a Dockerfile</li>
-      <li>🔭 Caching</li>
-    </ul>
-  </li>
-  <li>Function that takes a step, it’s inputs, and runs it
-    <ul>
-      <li>Capture data about each step
+      <li>CI: scripts that run automatically when code is changed
         <ul>
-          <li>stdout and stderr</li>
-          <li>inputs and ouputs of step</li>
-          <li>start/end times of step
-🔭 capturing more fine-grained timings, such as of commands ran in steps</li>
-          <li>success or failure</li>
-          <li>🔭 capturing test output in a structured format</li>
+          <li>To gate what gets merged into the project (automated tests)</li>
+          <li>To automate common tasks (releases)</li>
+          <li>Because the scripts run too slow on a regular computer</li>
+        </ul>
+      </li>
+      <li>CI system: software that runs these scripts.
+        <ul>
+          <li>Examples: Github Actions, Jenkins, …</li>
         </ul>
       </li>
     </ul>
   </li>
-  <li>Implement functionality for scheduling and running jobs
+  <li>We’re going to design a CI system. Goals:
     <ul>
-      <li>Taking in requests to run jobs and queue them
-✂️ Deduplicating requests to run the same job with the same inputs in the queue</li>
-      <li>Running a job, by running it’s steps in dependency order</li>
-      <li>Design for allowing work to be distributed across a cluster of CI workers
-🔭 Implementation of clustering is out of scope</li>
-      <li>🔭 support for pull-based jobs (i.e. Github events)</li>
-      <li>🔭 running jobs in parallel</li>
+      <li>Allow CI scripts to be written in the Roc language</li>
+      <li>CI steps can run in parallel to make CI complete faster</li>
+      <li>CI can produce clear reports on (failed) runs</li>
+      <li>CI script created this way can be ran by, for instance, Github Actions
+        <ul>
+          <li>Because Github Actions is free for open source projects, so commonly used</li>
+        </ul>
+      </li>
     </ul>
   </li>
-  <li>✂️ Some form of human interface for querying CI system progress
-For a real system I’d like this to be a web UI, for the chapter I wonder if a CLI is good enough, or even to punt on this entirely.</li>
+  <li>We’re going to design the CI around an example project:
+[OPEN QUESTION] seem reasonable to use a roc project as the CI example in a Roc book?
+    <ul>
+      <li>A Roc library, using git for version control</li>
+      <li>CI runs tests and performs a release of the library if they pass:
+        <ul>
+          <li>Run tests in library code itself</li>
+          <li>Checks for errors in example apps bundled with library</li>
+          <li>Create a release bundle on Github</li>
+          <li>Build documentation for library and push to static site
+[OPEN QUESTION] github pages / Netlify / … ?</li>
+        </ul>
+      </li>
+      <li>[OPEN QUESTION] add a github-actions yml stub for automatically running this script on Github?</li>
+    </ul>
+  </li>
+  <li>First iteration: a single script that performs the above tasks in order
+    <ul>
+      <li>Script written in Roc using the basic-cli platform</li>
+      <li>Helper functions for different CI steps, <code class="language-plaintext highlighter-rouge">main</code> calls the helpers in order.</li>
+    </ul>
+  </li>
+  <li>Reflect:
+    <ul>
+      <li>Nice: script can be ran locally and by CI server with equal ease (many CI systems don’t have this property)</li>
+      <li>Not nice: output is a single logfile. Error presentation does not have a clear format like:
+Step X failed, for reason Y</li>
+      <li>Single script, no opportunities to run parts of it in parallel for faster CI</li>
+      <li>Fails on first error, does not accumulate as much errors from parallel branches as possible</li>
+    </ul>
+  </li>
+  <li>Second iteration: Allow CI system to run steps in parallel on different machines
+    <ul>
+      <li>This requires the CI system to know the structure of the CI script before running it, specifically:
+        <ul>
+          <li>What steps does the script consist off?</li>
+          <li>What are the dependencies between the steps
+            <ul>
+              <li>Important for figuring out running order, and what can be parallelized</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>Additionally, if we’re going to run steps in different processes on different machines, when one step wishes to pass some data to a subsequent step, we need to serialize/deserialize that data.</li>
+      <li>Propose design for a data type that contains the information the CI system needs to be able to orchestrate a parallelized build:
+        <pre><code class="language-roc">Job : List Step
+
+Step : {
+    name : Str,      # assuming each step to have a unique name
+    dependencies : List Str,
+    run : List U8 -&gt; Task (List U8) Str,
+}
+</code></pre>
+      </li>
+      <li>Now for designing an API to construct values of the above type
+        <ul>
+          <li>Motivation: having to manually construct these values would be error prone (circular dependencies, missing dependencies), and unergonomic (serializing/deserializing each step)</li>
+          <li>Design consideration: the API in our previous iteration was in many ways ideal: our ‘CI system’ was a plain Roc script, so no special knowledge was required to write CI. Let’s keep as close to this design as we can.</li>
+          <li>In the spirit of the above, let’s not change anything about the functions we had implementing individual steps.</li>
+          <li>We have to change our <code class="language-plaintext highlighter-rouge">main</code> though. Present proposed design
+            <pre><code class="language-roc">job : Ci.Job
+job =
+    repoDetails &lt;- Ci.step0 "setup git" Ci.setupGit
+
+    testsPass &lt;- Ci.step1 "run tests" repoDetails
+    docs &lt;- Ci.step1 "build documentation" repoDetails
+    release &lt;- Ci.step1 "build release" repoDetails
+
+    {} &lt;- Ci.step2 "publish release" testsPass release
+    {} &lt;- Ci.step2 "publish documentation" testsPass docs
+
+    Ci.done
+</code></pre>
+            <p>This looks reasonably similar to the main we had before. Instead of directly calling the step functions, we wrap the function calls into one of the <code class="language-plaintext highlighter-rouge">Ci.stepX</code> functions.</p>
+          </li>
+          <li>Show how we can implement the <code class="language-plaintext highlighter-rouge">Ci</code> module to make the API above produce a <code class="language-plaintext highlighter-rouge">Job</code> value.</li>
+          <li>Show how we can implement code that runs a <code class="language-plaintext highlighter-rouge">Job</code> value, still using the basic-cli platform.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Reflect:
+    <ul>
+      <li>Our CI now parallelizes steps when possible</li>
+      <li>Our system executes as large a part of the step graph as it can instead of failing on the first error.</li>
+      <li>We will be able to improve CI output, grouping it by step</li>
+      <li>Within a step output could still be improved. Would be nice to see each individual command run, and then the stdout/stderr of that individual command below.</li>
+    </ul>
+  </li>
+  <li>Third iteration: custom task type to control effects performed in task steps
+[OPEN QUESTION] is this too much? Can be cut if so.
+    <ul>
+      <li>Currently CI scripts can make use of any Task-returning function supported by the basic-cli platform. If we define our own Task type then we can limit effects ran to functions that we provide, and then ensure those functions format output in particular ways.</li>
+      <li>Show implementation of a custom Task type that wraps the platform’s Task type, implement basics of Task API.</li>
+      <li>Implement library functions for printing a line to stdout and one for running a command.</li>
+      <li>Update example to use the new helpers</li>
+    </ul>
+  </li>
+  <li>Reflect:
+    <ul>
+      <li>We can now fully customize presentation of tasks run by the script.</li>
+      <li>Downside is that users of the CI system will no longer be able to rely on their familiarity with the Tasks provided by the basic-cli platform. That seems okay though, having environments supporting different types of effectfull function is a core tenet of the Roc language.</li>
+    </ul>
+  </li>
+  <li>Ideas for further iterations:
+    <ul>
+      <li>Turn CI system from a library into a platform
+        <ul>
+          <li>Get benefits of controlling effects without needing a custom Task type</li>
+        </ul>
+      </li>
+      <li>Produce pipeline specifications for other CI systems (like Github Actions) from <code class="language-plaintext highlighter-rouge">Job</code> values.
+        <ul>
+          <li>Makes it possible to use Roc-ci specifications in many commonly used (sometimes free) CI systems.</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
 </ul>
 
     </main>
