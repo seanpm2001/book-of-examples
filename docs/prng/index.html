@@ -16,6 +16,91 @@
 <p class="author">Written by <a href="https://github.com/nathanielknight">Nathaniel Knight</a>
 </p>
 
+<p>This chapter builds a small suite of random generation tools on top of
+32-bit pseudo-random number generators. It covers passing state in
+immutable programs, detailed integer arithmetic, and opaque types.</p>
+
+<p>Except where otherwise noted, I’ve got working code for all of these sections.</p>
+
+<h2 id="outline">Outline</h2>
+
+<ul>
+  <li>RNGs in Roc
+    <ul>
+      <li>What RNGs are used for; PRNs vs. CSRNGs</li>
+      <li>How RNGs are commonly implemented (e.g. in Python or JavaScript)</li>
+      <li>Why that doesn’t work in Roc, and what to do instead</li>
+      <li><a href="./PRNG.roc">PRNG.roc</a>: Defining an interface for a PRNG</li>
+    </ul>
+  </li>
+  <li>Building on top of <code class="language-plaintext highlighter-rouge">PRNG</code>
+    <ul>
+      <li><a href="./TestGenerators.roc">TestGenerators.roc</a>: Not actually random, but let us test these tools generically</li>
+      <li><a href="./RandomTools.roc">RandomTools.roc</a>: Building on top of a U32 generator</li>
+      <li>These are implemented:
+        <ul>
+          <li>Generating lists</li>
+          <li>Generating <code class="language-plaintext highlighter-rouge">U64</code>s</li>
+          <li>Generating numbers in a range; modulo bias</li>
+          <li>Shuffling</li>
+        </ul>
+      </li>
+      <li>And I could add and talk about as many of these as we have time/space for
+        <ul>
+          <li>Sampling from a list with and without replacement</li>
+          <li>Generating floating point numbers</li>
+          <li>Rejection sampling (generating values that follow an arbitrary distribution)</li>
+        </ul>
+      </li>
+      <li>This chapter is/would be mostly implemented in terms of
+quite concrete recursive functions and <code class="language-plaintext highlighter-rouge">List.walk</code></li>
+    </ul>
+  </li>
+  <li>RANDU: a bad PRNG
+    <ul>
+      <li>Disclaimer: this RNG is deeply flawed, but we’re going to implement it anyways</li>
+      <li>Formula</li>
+      <li><a href="./RANDU.roc">RANDU.roc</a>: a bad PRNG
+        <ul>
+          <li>RNG state as an opaque type</li>
+          <li>Checked vs. Saturating vs. Wrapping arithmetic</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Demonstrating RANDU’s badness:
+    <ul>
+      <li><a href="./generatePointsRANDU.roc">generatePointsRANDU.roc</a>: A program to generate points in 3d space</li>
+      <li>Visualization of these points: they’re organized, and not very random!</li>
+    </ul>
+  </li>
+  <li>PCG: A better PRNG
+    <ul>
+      <li>Point to <a href="https://github.com/JanCVanB/roc-random">roc-random</a>, a more
+robust (but more complicated) implementation of PCG</li>
+      <li>PCG.roc: a simple implementation of PCG
+        <ul>
+          <li>Bit-shifting, Xor</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Demonstrating PCG’s superiority and the utility of shared types
+    <ul>
+      <li><a href="./generatePointsPCG.roc">generatePointsPCG.roc</a>: A program to generate points in 3d space
+        <ul>
+          <li>Because we have a shared interface for RNGs, this is basically
+the same as <a href="./generatePointsRANDU.roc">generatePointsRANDU.roc</a></li>
+        </ul>
+      </li>
+      <li>Visualization these points; they’re very random</li>
+      <li>Note that we don’t actually <em>need</em> <a href="./PRNG.roc">PRNG.roc</a> as long as our RNGs have have
+the same type signature (though it’s helpful to have it written down;
+deleting PRNG.roc and making the code run is left as an exercise to the
+reader)</li>
+    </ul>
+  </li>
+</ul>
 
 
     </main>
