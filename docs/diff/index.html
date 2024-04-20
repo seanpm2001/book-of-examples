@@ -16,7 +16,56 @@
 <p class="author">Written by <a href="https://github.com/hristog">Hristo Georgiev</a>
 </p>
 
+<h2 id="outline">Outline</h2>
+<ul>
+  <li>A brief intro to the <a href="https://en.wikipedia.org/wiki/Longest_common_subsequence#Print_the_diff">longest common subsequence</a> (LCS) algorithm and its applications.</li>
+  <li>Building visual intuition about the workings of the algorithm via toy examples (a couple of examples quintessentially using DNA base-pair sequences).
+    <ul>
+      <li>Discussing algorithm design choices that make up a visually “good” diff output in practice.</li>
+    </ul>
+  </li>
+  <li>Implementing a textbook Roc version of the LCS algorithm.</li>
+  <li>Incrementally introducing enhancements to the implementation, targeted towards using it more effectively as a <code class="language-plaintext highlighter-rouge">diff</code> tool.
+    <ul>
+      <li>This gives the opportunity to discuss Roc-specific concepts such as:
+        <ul>
+          <li>Abilities such as <code class="language-plaintext highlighter-rouge">Eq</code> and <code class="language-plaintext highlighter-rouge">Hash</code>.
+            <ul>
+              <li>The discussion will touch upon the fact the LCS algorithm can be applied to arbitrary homogeneous sequences of elements of any type, as long as the elements of the underlying type can be compared for equality against each other.</li>
+            </ul>
+          </li>
+          <li>Records and associated syntax.
+            <ul>
+              <li>This will be useful for customising the tool, for instance:
+                <ul>
+                  <li>Collapsing long sections of matching sequences (this can be parametrised by length).</li>
+                  <li>Colourising the output (different colour schemes may apply).</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Employing the implemented tool as a <code class="language-plaintext highlighter-rouge">git diff</code> tool.</li>
+  <li>Discussing and implementing optimisations such as operating on “compressed” versions of the elements such as hashes and lengths.</li>
+  <li>Discussing the connecting points from a <code class="language-plaintext highlighter-rouge">diff</code> tool to the ability of merging branches in a version-control system context, via the 3-way merge algorithm.</li>
+</ul>
 
+<h3 id="in-scope-if-time-permits">In scope, if time permits</h3>
+
+<p><strong>Note:</strong> By time, it is meant time from a reader’s perspective, in terms of the generally-agreed-upon reader persona and the associated allotted time-per-chapter guideline.</p>
+
+<ul>
+  <li>Improving the implementation, so that the output format - besides basic markers for insertions and deletions - conforms to one of the common <code class="language-plaintext highlighter-rouge">diff</code> format <a href="https://www.math.utah.edu/docs/info/diff_3.html">specifications</a>.</li>
+  <li>An overview and perhaps implementation of algorithms used by <code class="language-plaintext highlighter-rouge">git diff</code> and/or other industry-standard tools and their juxtaposition with the LCS algorithm.</li>
+</ul>
+
+<h3 id="out-of-scope">Out of scope</h3>
+<ul>
+  <li>Version-control system concepts beyond the scope of <code class="language-plaintext highlighter-rouge">diff</code>-ing files and prerequisites for merging and identifying merge conflicts.</li>
+</ul>
 
     </main>
     <footer>
