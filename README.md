@@ -27,6 +27,7 @@ that most programmers have never encountered.
 | Stuart Hinson      | stuarth            | redis data store          | redis      |
 | Nathaniel Knight   | nathanielknight    | random number generation  | prng       |
 | Monica McGuigan    | monmcguigan        | JSON codec                | json       |
+| Noel Rivas         | noelrivasc         | logging framework         | logging    |
 | Abhinav Sarkar     | abhin4v            | pretty printing           | pretty     |
 | Fabian Schmalzried | FabHof             | binary data packing       | binary     |
 | Isaac Van Doren    | isaacvando         | compression               | compress   |

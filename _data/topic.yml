@@ -71,6 +71,11 @@
 - slug: "license"
   title: "License"
 
+- slug: "logger"
+  title: "A Logging Framework"
+  github:
+  - "noelrivasc"
+
 - slug: "match"
   title: "Pattern Matching"
   github:

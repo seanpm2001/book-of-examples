@@ -1,4 +1,5 @@
-# Logging Library
+---
+---
 
 This chapter goes through the building of a simple logging library with the following capabilities:
 

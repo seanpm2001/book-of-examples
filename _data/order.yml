@@ -4,6 +4,7 @@ chapters:
 - diff
 - json
 - pretty
+- logger
 - prng
 - binary
 - ci

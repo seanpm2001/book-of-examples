@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Software Design by Example in Roc</title>
+<link rel="shortcut icon" type="image/x-icon" href="/book-of-examples/favicon.svg">
+<link rel="stylesheet" href="/book-of-examples/bw.css" type="text/css">
+<link rel="stylesheet" href="/book-of-examples/site.css" type="text/css">
+
+  </head>
+  <body>
+    <main>
+      <h1>A Logging Framework</h1>
+<p class="author">Written by <a href="https://github.com/noelrivasc">Noel Rivas</a>
+</p>
+
+<p>This chapter goes through the building of a simple logging library with the following capabilities:</p>
+
+<ul>
+  <li>Log level filtering</li>
+  <li>Multiple channels (stderr, append to file)</li>
+  <li>JSON encoding</li>
+  <li>Ability to use multiple logging configurations in the same program</li>
+  <li>Logger configuration through environment vars</li>
+</ul>
+
+<h2 id="chapter-structure">Chapter structure</h2>
+
+<p>The chapter follows a <em>challenge and response</em> pattern. The first iteration builds the simplest logger imaginable (just write to stdout) and each iteration improves on the previous one. After each implementation, its downsides are commented, and the next set of improvements are outlined.</p>
+
+<p>After the final implementation, a recap of the iterations, and the concepts that were explained in each of them, is offered.</p>
+
+<p><em>NOTE: On each of the iterations below, I’ll list some concepts that could be explained using the iteration code.</em></p>
+
+<p><em>The list is offered as a suggestion: whether we actually flesh out those concepts in this chapter or not will depend on the editorial decisions on chapter ordering and interdependence.</em></p>
+
+<h3 id="0-minimum-viable-logger">0. Minimum viable logger</h3>
+
+<p>An extremely simple, single-function “logger” that takes simple arguments (A message and a value) and outputs to Stdout.</p>
+
+<p>This iteration is only pertinent if the chapter introduces the concept of platform. It may be overkill in terms of paring down the first iteration.</p>
+
+<pre><code class="language-roc">main =
+    log "This is a value:" 42
+    
+log = \msg, val -&gt;
+    Stdout.line "$(msg): $(Inspect.toStr val)"
+</code></pre>
+
+<p><em>Concepts</em>:</p>
+
+<ul>
+  <li>Capabilities defined by platform</li>
+  <li>Importing from platform</li>
+</ul>
+
+<h3 id="1-append-to-file">1. Append to file</h3>
+
+<p>At the end of this iteration, the logger:</p>
+
+<ul>
+  <li>Is composed by just a couple of functions in the main file (no library)</li>
+  <li>Appends to a file</li>
+  <li>Includes timestamps</li>
+  <li>Has a hardcoded output path</li>
+  <li>Needs the log file to be created manually</li>
+</ul>
+
+<p>The idea behind its simplicity is to have the least amount of moving parts possible, so we can explore tasks, error handling, and the syntax around them in detail, without the burden of a larger program.</p>
+
+<p>I would like to present the code for this iteration with / without syntax sugar, and take steps to guide the reader to make the connection between type annotations in the documentation, the function calls without syntactic sugar, and the code with sugar.</p>
+
+<p><em>Concepts</em>:</p>
+
+<ul>
+  <li>Task</li>
+  <li>Error handling</li>
+  <li>Using Inspect</li>
+  <li>Backpassing syntax</li>
+  <li>Pipe syntax (first pass, simplest case, <code class="language-plaintext highlighter-rouge">f |&gt; a</code>)</li>
+  <li>Reading type annotations</li>
+</ul>
+
+<h3 id="2-a-usable-library">2. A usable library</h3>
+
+<p>This iteration is a small step from the previous one in terms of complexity of the logger. It mostly expands on the previous one as a reinforcement.</p>
+
+<p>An important step is that the logger becomes a module, and a more realistic use case is presented.</p>
+
+<p>At the end of this iteration, the logger:</p>
+
+<ul>
+  <li>Becomes a module</li>
+  <li>Handles log file creation</li>
+  <li>Handles permission errors</li>
+  <li>Takes a configuration record as argument (which makes it possible to have multiple channels)</li>
+  <li>Reads configuration overrides from environment variables</li>
+</ul>
+
+<p><em>Concepts</em>:</p>
+
+<ul>
+  <li>Modules</li>
+  <li>Types (configuration record)</li>
+</ul>
+
+<h3 id="3-log-level">3. Log level</h3>
+
+<p>This iteration adds JSON encoding and log level configuration.</p>
+
+<p><em>NOTE</em>: JSON encoding would depend on <a href="https://github.com/lukewilliamboswell/roc-json">roc-json</a>. If the library is too much, we can do something like rudimentary CSV without escaping or headers: just join a list with commas.</p>
+
+<p><em>Concepts</em>:</p>
+
+<ul>
+  <li>Tags and payloads</li>
+  <li>Pattern matching</li>
+</ul>
+
+    </main>
+    <footer>
+  Copyright © the contributors 2024
+  &middot;
+  <a href="https://github.com/roc-lang/book-of-examples">GitHub repository</a>
+</footer>
+
+  </body>
+</html>
