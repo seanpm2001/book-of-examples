@@ -25,40 +25,78 @@ We'll work with the following grammar.
 
 As Brian Kernighan notes, "This is quite a useful class; in my own experience of using regular expressions on a day-to-day basis, it easily accounts for 95 percent of all instances."
 
-Let's begin with a set of tests to guide our implementation
+Let's begin with a couple tests for a literal match.
 
 ```roc
-# literal matches
 expect match "a" "a" == Bool.true
 expect match "b" "a" == Bool.false
 expect match "a" "ab" == Bool.true
 expect match "b" "abcdefgh" == Bool.true
 expect match "ab" "ba" == Bool.false
-
-# wildcard
-expect match "a.c" "abc" == Bool.true
-
-# ^ and $
-expect match "^a" "ab" == Bool.true
-expect match "^b" "ab" == Bool.false
-expect match "a$" "ab" == Bool.false
-expect match "a$" "ba" == Bool.true
-
-# repetitions
-expect match "a*" "" == Bool.true
-expect match "a*" "baac" == Bool.true
-expect match "ab*c" "ac" == Bool.true
-expect match "ab*c" "abc" == Bool.true
-expect match "ab*b*c" "abc" == Bool.true
-expect match "ab*c" "abbbc" == Bool.true
-expect match "ab*c" "abxc" == Bool.false
-expect match "^X.*xyz" "Xaxyz" == Bool.true
+expect match "" "" == Bool.true
 ```
 
-That done, let's write our top-level `match` function. Its role is to search `text` for starting points that match `pattern`.
+That done, let's turn our attention to how we'll structure our solution. We'll approach it recursively. A `pattern` matches `text` if the first element of the pattern matches the first element of the text, and then the rest of the pattern matches the remainder of the text. Additionally, setting aside the `^` operator, a match can begin at any point in the text, so we'll need to check many possible starting points within `text` for a match.
+
+We'll write a `match` function to consider possible starting points, and `matchHere` to check whether a particular substring matches a pattern.
+
 
 ```roc
 match : Str, Str -> Bool
+match = \pattern, text ->
+    # convert pattern and text from Str to List U8, which will be more natural to work with
+    patternList = Str.toUtf8 pattern
+    textList = Str.toUtf8 text
+
+    # we'll always need to consider at least 0 as a starting point since pattern may be empty
+    startingPoints = List.range { start: At 0, end: At (Num.max 1 (List.len textList)) }
+
+    # find the first starting point in `text` that `pattern` matches.
+    startingPoints
+    |> List.findFirst \index -> matchHere patternList (List.dropFirst textList index)
+    |> Result.isOk
+
+matchHere : List U8, List U8 -> Bool
+matchHere = \pattern, text ->
+    when (pattern, text) is
+        ([], _) -> Bool.true
+        ([p, ..], [t, ..]) if p == t ->
+            matchHere (List.dropFirst pattern 1) (List.dropFirst text 1)
+
+        _ -> Bool.false
+```
+
+Let's give particular attention to `matchHere`. Recall that we're only concerned with literal matches at this stage. We're recursively evaluating pattern for a match on text. We'll conclude it's a match if `pattern` is empty, otherwise we'll check the remainder of `pattern` against the remainder of `text` if the first element of pattern equals the first element of `text, and finally we'll conclude it's not a match if neither of those are true.
+
+Our tests now pass, so let's extend the solution to handle wildcard matches. Again, we'll write a couple tests to get started.
+
+```roc
+expect match "." "abc" == Bool.true
+expect match "a.c" "abc" == Bool.true
+```
+
+Handling this requires a simple modification to `matchHere`
+
+```
+matchHere = \pattern, text ->
+    when (pattern, text) is
+        ([], _) -> Bool.true
+        # we'll now consider any value of t to match if p is '.'
+        ([p, ..], [t, ..]) if p == t || p == '.' ->
+            matchHere (List.dropFirst pattern 1) (List.dropFirst text 1)
+
+        _ -> Bool.false
+```
+
+Great! Next up, the `^` operator, which constrains the match to occur at the beginning of the string. Tests
+
+```roc
+expect match "^a" "ab" == Bool.true
+expect match "^b" "ab" == Bool.false
+```
+
+This time we'll modify `match`'s behavior
+```roc
 match = \pattern, text ->
     # convert pattern and text from Str to List U8
     patternList = Str.toUtf8 pattern
@@ -77,58 +115,67 @@ match = \pattern, text ->
         |> Result.isOk
 ```
 
-We'll then take our cues from Rob Pike's C-based implementation to write `matchHere`.
+We're getting near the end, so fittingly we'll consider `$` next, which matches the end of `text`. We'll handle this with a small extension to `matchHere` that accepts the match if all that's left in `pattern` is `$` and text is empty.
 
+Tests
 ```roc
-matchHere : List U8, List U8 -> Bool
-matchHere = \pattern, text ->
-    # if the pattern is empty, we've found a match!
-    if List.isEmpty pattern then
-        Bool.true
-        # also, if the only remaining element in the pattern is $ and text is empty, we've found a match
-    else if pattern == ['$'] && List.isEmpty text then
-        Bool.true
-        # Some character followed by * -- we'll handle this in matchStar
-    else if List.get pattern 1 == Ok '*' then
-        when List.first pattern is
-            Ok ch -> matchStar ch (List.dropFirst pattern 2) text
-            _ -> Bool.false
-        # match either a literal match or a wildcard
-    else if List.first pattern == Ok '.' || List.first pattern == List.first text then
-        matchHere (List.dropFirst pattern 1) (List.dropFirst text 1)
-        # if none of the following cases are true, text does not match pattern
-    else
-        Bool.false
+expect match "a$" "ab" == Bool.false
+expect match "a$" "ba" == Bool.true
 ```
-
-and `matchStar`
-
-```roc
-matchStar : U8, List U8, List U8 -> Bool
-matchStar = \ch, pattern, text ->
-    # does the remainder of the text match the remainder of the pattern?
-    if matchHere pattern text then
-        Bool.true
-    else
-        when List.first text is
-            # if it's a valid repetition of ch, our answer is to consider the remaining elements of text
-            Ok c if c == ch || ch == '.' -> matchStar ch pattern (List.dropFirst text 1)
-            _ -> Bool.false
-```
-
-With that, our tests pass -- incredible! Let's push onward and see whether we can improve the readability of `matchHere` with Roc's pattern matching. Consider the following change
-
 
 ```roc
 matchHere = \pattern, text ->
-    when pattern is
-        [] -> Bool.true
-        ['$'] if List.isEmpty text -> Bool.true
-        [ch, '*', .. as remainingPattern] -> matchStar ch remainingPattern text
-        [c, .. as remainingPattern] if c == '.' -> #  (ch == '.' || Ok ch == List.first text)
-            matchHere remainingPattern (List.dropFirst text 1)
+    when (pattern, text) is
+        ([], _) -> Bool.true
+        # end of string
+        (['$'], []) -> Bool.true
+        ([p, ..], [t, ..]) if p == t || p == '.' ->
+            matchHere (List.dropFirst pattern 1) (List.dropFirst text 1)
 
         _ -> Bool.false
 ```
 
-We've substantially improved on the initial version. Using `when pattern is` concisely show that we're primarily considering `pattern`'s value, and destructuring saves the clutter of selecting elements like `remainingPattern` while also more clearly communicating their role.
+Last up is the `*` operator, which matches zero or more repetitions of the preceeding character.
+
+```roc
+expect match "a*" "" == Bool.true
+expect match "a*" "aac" == Bool.true
+expect match "a*" "baac" == Bool.true
+expect match "ab*c" "ac" == Bool.true
+expect match "ab*b*c" "abc" == Bool.true
+expect match "ab*c" "abbbc" == Bool.true
+expect match "ab*c" "abxc" == Bool.false
+```
+
+We'll handle this operator by matching any character followed by a `*`, then delegating to a new function we'll write, `matchStar`
+
+```roc
+matchHere = \pattern, text ->
+    when (pattern, text) is
+        ([], _) -> Bool.true
+        (['$'], []) -> Bool.true
+        # match any character followed by a *
+        ([p, '*', ..], _) -> matchStar p (List.dropFirst pattern 2) text
+        ([p, ..], [t, ..]) if p == t || p == '.' ->
+            matchHere (List.dropFirst pattern 1) (List.dropFirst text 1)
+
+        _ -> Bool.false
+```
+
+`matchStart` is another recursive function. It will first consider whether the portion of `pattern` following `*` matches text. If so, it's a match. If not, we'll retry the function with the remainder of `text` if its first character matches the repeated character.
+
+```roc
+matchStar : U8, List U8, List U8 -> Bool
+matchStar = \repeatedChar, remainingPattern, text ->
+    # does the remainder of the text match the remainder of the pattern?
+    if matchHere remainingPattern text then
+        Bool.true
+    else
+        when List.first text is
+            # if it's a valid repetition of repeatedChar, our answer is to consider the remaining elements of text
+            Ok c if c == repeatedChar || repeatedChar == '.' ->
+                matchStar repeatedChar remainingPattern (List.dropFirst text 1)
+            _ -> Bool.false
+```
+
+And there we have it -- passing tests! The implementation we've written is derived from [Rob Pike's in Beautiful Code](https://www.oreilly.com/library/view/beautiful-code/9780596510046/ch01.html), which is written in C. It's well worth a few minutes to read through that version to understand how the tools and abstractions a language provides affects the code that's written.
