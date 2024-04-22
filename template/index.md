@@ -1,36 +1,67 @@
 ---
 ---
 
-## Design
-- When the user runs `compile.roc`, we search for templates ending in `.rtl` (Roc Template Language) in the current directory and load them.
-- We then parse each template into a list of nodes, each node being unstructured text, a conditional, an HTML-escaped interpolation, a raw interpolation, or a list. Parsing never fails; if the user makes a syntax error while trying to use one of the template languages features, they will get out plain text instead.
-- We then take the parsed templates and generate a file called `Pages.roc` that contains a function corresponding to each template file.
-- Each function accepts a single argument called `model`. Normally it is a record, and fields on it are accessed in the template like this `Hello, {{model.name}}!`, although it could be another type.
+## Notes
+- This chapter has no code dependencies, but it would be good to place it somewhere after the HTML parsing chapter so that parsing without combinators can be introduced earlier.
+- The generated HTML will contain some whitespace weirdness due to the presence of the directives in the templates. This does not impact the way the HTML is rendered (unless using `pre`). Fully handling the whitespace correctly would complicate the parser more, so I am going to leave it out of the chapter.
+- There is more code that can be cut to decrease the scope of the chapter if necessary, but I am leaving it in for the time being.
 
-### Type Inference
-- One of my goals with this template language is to get compile time errors. I want to emphasize in the chapter how great it is that Roc has principal decidable type inference, and that it is completely necessary for us to get compile time errors and nice editor support with this kind of approach.
-- This approach could be used easily in dynamic languages like JS or Python, but then the compile time errors are lost. If we wanted to use the same approach in a language like Java, with compile time errors, we would have to do real type inference on the template to determine the types in order to include them in the function for the template.
+## Outline
+### Intro
+- What is an HTML template language?
+- Why use one instead of writing functions to generate HTML?
+    - Good for enhancing existing content.
+    - The template looks much more like the output.
+- Many template languages have runtime errors; we want compile time errors.
+- We will use code generation to accomplish this.
+    - Reflection is not an option here.
+    - Avoiding these features can give us compile time errors and faster runtime execution.
+    - Having a fast compiler is very relevant here.
+
+### Design
+- Write a template like `helloWorld.rtl`.
+- Run `rtl` to parse the template file and generate a `Pages.roc` file containing a function called `helloWorld`.
+- Call the function to generate HTML.
+- Doing this means the template function becomes a normal part of our codebase so we get compile time errors and LSP support.
 
 ### Parsing
-- I wrote my own parser combinators for this to avoid pulling in another dependency. They do not include errors right now because the whole parsing step never fails. Because at least one other chapter will need similar parsing capabilities, I think it would be good to develop a parser in one chapter and use it in the others.
-- Right now the generated HTML will contain some whitespace weirdness due to the presence of the extra syntax in the templates. This does not impact the way the HTML is rendered (unless using `pre`), but it would be nice to have it fixed eventually. I haven't thought about it a ton, but it might be a bit challenging to handle properly in all cases, and I think it would probably be a distraction from the point of the chapter.
+- First we need to parse the template into a data structure we can work with.
+- A parser is a function that takes unstructured input like a list of bytes, and produces a useful data structure.
+- In our case the data structure will look something like this: (show small version of Node type)
+- A parser may not always succeed, so we need to model the failure with `[Match, NoMatch a]`.
+- We need to know how much the parser consumed, so we need to return the remaining input in addition to the value: `[Match, NoMatch {val: a, input: List U8}]`.
+- Composing these parsers becomes tedious, so we can use parser combinators.
+- The `Parser a` type alias is useful to help us think about composing parsers.
+- We don't need to have failure states in our parser; if a parser doesn't match, just fall back on text.
+    - We could implement error messages for incomplete directives if desired.
+- Supporting these items will give us a very expressive language:
+    - Interpolation
+        - Escapes HTML
+    - Conditionals
+    - Lists
+    - When is
+    - Raw interpolation
+        - Useful for dynamically displaying HTML
 
-### When-Is
-I would like to include a syntax for when expressions also:
-```
-{|when x |}
-{|is Err NotFound |}
-    Error
-{|is Ok val |}
-    {{ val }}
-{|endwhen|}
-```
-I have not implemented this yet, but I think it should be included if there is enough space. It is probably a fairly uncommmon feature and is necessary for using ADTs nicely in templates.
+### Code Generation
+- Once we've parsed the input we need to generate the output.
+- First we can walk the data structure from the parser and condense it into a smaller group of nodes.
+- We can then take each node and generate the Roc code that will generate the output string.
+- This process is recursive because some nodes contain a list of other nodes.
+- For each list of nodes, we will generate a Roc list and pass it into `Str.joinWith _ ""`.
+    - This has the advantage of being easy and readable, although it would probably be faster with buffer passing style.
+- We need to take care to indent each level properly.
 
-## Example
-To try the example, run `roc ../compile.roc && roc server.roc` in `/example`.
-    
-## Other options considered
-- Originally, I wanted the functions to take a destructured record (`page = \{name, email} ->`) so that fields could be accessed directly in the template without having to prefix them with `model.`. To do this we would have to identify each field being used in the template. This should be doable, but I don't think it is worth increasing the scope of the chapter to do it.
-- I have a couple of usages of `crash` in the code right now. These could be removed, but I am a bit torn because I don't like presenting errors that won't actually happen.
-- We could have a `.roc` file for each template and then pull them all into a single module which the user imports. This would avoid name conflicts and extra long files, but I don't think it is necessary or worth the increased scope.
+### Conclusion
+- With a relatively small amount of work, we already have a very nice template language with compile time errors.
+- Using Roc functions directly in the template is great because we don't have to learn/build another language.
+    - We can do this nicely because Roc uses pure functions which allows us to pipe together single line expressions.
+    - This doesn't work as well in languages where the standard library uses mutation more commonly.
+- We can write arbitrary patterns in list and when expressions because we are just generating normal Roc code.
+- We can approach the feeling of a dynamic template language because we have
+    - A fast compiler
+    - structural records
+    - type inference
+- We have the opportunity to make the runtime execution very fast because we don't have to do reflection.
+- Errors in the template reference Pages.roc which is not ideal.
+    - This could be resolved by building out more tooling.
