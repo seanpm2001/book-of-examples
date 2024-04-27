@@ -1,8 +1,6 @@
 ---
 ---
 
-# Binary
-
 Roc provides the ability to encode and decode values, which allows us to transform an arbitrary Roc value into a `List U8` and back. 
 This `List U8` can be of any type, including string-based formats such as JSON or XML, or any binary format.
 This is beneficial for saving data to disk, sending data over a network, or any other situation where we require the conversion of a value to a sequence of bytes.
@@ -48,4 +46,3 @@ This chapter will focus on binary data and the encoding and decoding of such dat
 
 
 ## More detailed Explanation of Encoding & Decoding Abilities (only if chapter is get's not to long)
-- 

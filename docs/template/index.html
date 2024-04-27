@@ -16,45 +16,111 @@
 <p class="author">Written by <a href="https://github.com/isaacvando">Isaac Van Doren</a>
 </p>
 
-<h2 id="design">Design</h2>
+<h2 id="notes">Notes</h2>
 <ul>
-  <li>When the user runs <code class="language-plaintext highlighter-rouge">compile.roc</code>, we search for templates ending in <code class="language-plaintext highlighter-rouge">.rtl</code> (Roc Template Language) in the current directory and load them.</li>
-  <li>We then parse each template into a list of nodes, each node being unstructured text, a conditional, an HTML-escaped interpolation, a raw interpolation, or a list. Parsing never fails; if the user makes a syntax error while trying to use one of the template languages features, they will get out plain text instead.</li>
-  <li>We then take the parsed templates and generate a file called <code class="language-plaintext highlighter-rouge">Pages.roc</code> that contains a function corresponding to each template file.</li>
-  <li>Each function accepts a single argument called <code class="language-plaintext highlighter-rouge">model</code>. Normally it is a record, and fields on it are accessed in the template like this <code class="language-plaintext highlighter-rouge">Hello, !</code>, although it could be another type.</li>
+  <li>This chapter has no code dependencies, but it would be good to place it somewhere after the HTML parsing chapter so that parsing without combinators can be introduced earlier.</li>
+  <li>The generated HTML will contain some whitespace weirdness due to the presence of the directives in the templates. This does not impact the way the HTML is rendered (unless using <code class="language-plaintext highlighter-rouge">pre</code>). Fully handling the whitespace correctly would complicate the parser more, so I am going to leave it out of the chapter.</li>
+  <li>There is more code that can be cut to decrease the scope of the chapter if necessary, but I am leaving it in for the time being.</li>
 </ul>
 
-<h3 id="type-inference">Type Inference</h3>
+<h2 id="outline">Outline</h2>
+<h3 id="intro">Intro</h3>
 <ul>
-  <li>One of my goals with this template language is to get compile time errors. I want to emphasize in the chapter how great it is that Roc has principal decidable type inference, and that it is completely necessary for us to get compile time errors and nice editor support with this kind of approach.</li>
-  <li>This approach could be used easily in dynamic languages like JS or Python, but then the compile time errors are lost. If we wanted to use the same approach in a language like Java, with compile time errors, we would have to do real type inference on the template to determine the types in order to include them in the function for the template.</li>
+  <li>What is an HTML template language?</li>
+  <li>Why use one instead of writing functions to generate HTML?
+    <ul>
+      <li>Good for enhancing existing content.</li>
+      <li>The template looks much more like the output.</li>
+    </ul>
+  </li>
+  <li>Many template languages have runtime errors; we want compile time errors.</li>
+  <li>We will use code generation to accomplish this.
+    <ul>
+      <li>Reflection is not an option here.</li>
+      <li>Avoiding these features can give us compile time errors and faster runtime execution.</li>
+      <li>Having a fast compiler is very relevant here.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="design">Design</h3>
+<ul>
+  <li>Write a template like <code class="language-plaintext highlighter-rouge">helloWorld.rtl</code>.</li>
+  <li>Run <code class="language-plaintext highlighter-rouge">rtl</code> to parse the template file and generate a <code class="language-plaintext highlighter-rouge">Pages.roc</code> file containing a function called <code class="language-plaintext highlighter-rouge">helloWorld</code>.</li>
+  <li>Call the function to generate HTML.</li>
+  <li>Doing this means the template function becomes a normal part of our codebase so we get compile time errors and LSP support.</li>
 </ul>
 
 <h3 id="parsing">Parsing</h3>
 <ul>
-  <li>I wrote my own parser combinators for this to avoid pulling in another dependency. They do not include errors right now because the whole parsing step never fails. Because at least one other chapter will need similar parsing capabilities, I think it would be good to develop a parser in one chapter and use it in the others.</li>
-  <li>Right now the generated HTML will contain some whitespace weirdness due to the presence of the extra syntax in the templates. This does not impact the way the HTML is rendered (unless using <code class="language-plaintext highlighter-rouge">pre</code>), but it would be nice to have it fixed eventually. I haven’t thought about it a ton, but it might be a bit challenging to handle properly in all cases, and I think it would probably be a distraction from the point of the chapter.</li>
+  <li>First we need to parse the template into a data structure we can work with.</li>
+  <li>A parser is a function that takes unstructured input like a list of bytes, and produces a useful data structure.</li>
+  <li>In our case the data structure will look something like this: (show small version of Node type)</li>
+  <li>A parser may not always succeed, so we need to model the failure with <code class="language-plaintext highlighter-rouge">[Match, NoMatch a]</code>.</li>
+  <li>We need to know how much the parser consumed, so we need to return the remaining input in addition to the value: <code class="language-plaintext highlighter-rouge">[Match, NoMatch {val: a, input: List U8}]</code>.</li>
+  <li>Composing these parsers becomes tedious, so we can use parser combinators.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">Parser a</code> type alias is useful to help us think about composing parsers.</li>
+  <li>We don’t need to have failure states in our parser; if a parser doesn’t match, just fall back on text.
+    <ul>
+      <li>We could implement error messages for incomplete directives if desired.</li>
+    </ul>
+  </li>
+  <li>Supporting these items will give us a very expressive language:
+    <ul>
+      <li>Interpolation
+        <ul>
+          <li>Escapes HTML</li>
+        </ul>
+      </li>
+      <li>Conditionals</li>
+      <li>Lists</li>
+      <li>When is</li>
+      <li>Raw interpolation
+        <ul>
+          <li>Useful for dynamically displaying HTML</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
 </ul>
 
-<h3 id="when-is">When-Is</h3>
-<p>I would like to include a syntax for when expressions also:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{|when x |}
-{|is Err NotFound |}
-    Error
-{|is Ok val |}
-    
-{|endwhen|}
-</code></pre></div></div>
-<p>I have not implemented this yet, but I think it should be included if there is enough space. It is probably a fairly uncommmon feature and is necessary for using ADTs nicely in templates.</p>
-
-<h2 id="example">Example</h2>
-<p>To try the example, run <code class="language-plaintext highlighter-rouge">roc ../compile.roc &amp;&amp; roc server.roc</code> in <code class="language-plaintext highlighter-rouge">/example</code>.</p>
-
-<h2 id="other-options-considered">Other options considered</h2>
+<h3 id="code-generation">Code Generation</h3>
 <ul>
-  <li>Originally, I wanted the functions to take a destructured record (<code class="language-plaintext highlighter-rouge">page = \{name, email} -&gt;</code>) so that fields could be accessed directly in the template without having to prefix them with <code class="language-plaintext highlighter-rouge">model.</code>. To do this we would have to identify each field being used in the template. This should be doable, but I don’t think it is worth increasing the scope of the chapter to do it.</li>
-  <li>I have a couple of usages of <code class="language-plaintext highlighter-rouge">crash</code> in the code right now. These could be removed, but I am a bit torn because I don’t like presenting errors that won’t actually happen.</li>
-  <li>We could have a <code class="language-plaintext highlighter-rouge">.roc</code> file for each template and then pull them all into a single module which the user imports. This would avoid name conflicts and extra long files, but I don’t think it is necessary or worth the increased scope.</li>
+  <li>Once we’ve parsed the input we need to generate the output.</li>
+  <li>First we can walk the data structure from the parser and condense it into a smaller group of nodes.</li>
+  <li>We can then take each node and generate the Roc code that will generate the output string.</li>
+  <li>This process is recursive because some nodes contain a list of other nodes.</li>
+  <li>For each list of nodes, we will generate a Roc list and pass it into <code class="language-plaintext highlighter-rouge">Str.joinWith _ ""</code>.
+    <ul>
+      <li>This has the advantage of being easy and readable, although it would probably be faster with buffer passing style.</li>
+    </ul>
+  </li>
+  <li>We need to take care to indent each level properly.</li>
+</ul>
+
+<h3 id="conclusion">Conclusion</h3>
+<ul>
+  <li>With a relatively small amount of work, we already have a very nice template language with compile time errors.</li>
+  <li>Using Roc functions directly in the template is great because we don’t have to learn/build another language.
+    <ul>
+      <li>We can do this nicely because Roc uses pure functions which allows us to pipe together single line expressions.</li>
+      <li>This doesn’t work as well in languages where the standard library uses mutation more commonly.</li>
+    </ul>
+  </li>
+  <li>We can write arbitrary patterns in list and when expressions because we are just generating normal Roc code.</li>
+  <li>We can approach the feeling of a dynamic template language because we have
+    <ul>
+      <li>A fast compiler</li>
+      <li>structural records</li>
+      <li>type inference</li>
+    </ul>
+  </li>
+  <li>We have the opportunity to make the runtime execution very fast because we don’t have to do reflection.</li>
+  <li>Errors in the template reference Pages.roc which is not ideal.
+    <ul>
+      <li>This could be resolved by building out more tooling.</li>
+    </ul>
+  </li>
 </ul>
 
     </main>

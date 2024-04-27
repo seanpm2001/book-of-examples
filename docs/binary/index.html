@@ -16,7 +16,62 @@
 <p class="author">Written by <a href="https://github.com/FabHof">Fabian Schmalzried</a>
 </p>
 
+<p>Roc provides the ability to encode and decode values, which allows us to transform an arbitrary Roc value into a <code class="language-plaintext highlighter-rouge">List U8</code> and back. 
+This <code class="language-plaintext highlighter-rouge">List U8</code> can be of any type, including string-based formats such as JSON or XML, or any binary format.
+This is beneficial for saving data to disk, sending data over a network, or any other situation where we require the conversion of a value to a sequence of bytes.
+This chapter will focus on binary data and the encoding and decoding of such data by inventing our own binary format.</p>
 
+<h2 id="binary-representation-of-int">Binary representation of int</h2>
+<ul>
+  <li>roc has different int types I64, U8 etc..</li>
+  <li>signed represented with two’s complement</li>
+  <li>Bitwise operations (explanation for all, or just the ones required here?)</li>
+  <li>Code <code class="language-plaintext highlighter-rouge">U32 -&gt; (U8, U8, U8, U8)</code></li>
+  <li>Code <code class="language-plaintext highlighter-rouge">(U8, U8, U8, U8) -&gt; U32</code></li>
+  <li>Endianness</li>
+  <li>We know how long each item is, so we can just put them one after the other.</li>
+</ul>
+
+<h2 id="float">Float</h2>
+<ul>
+  <li>Explain sign, exponent, and fraction</li>
+  <li>Roc has <code class="language-plaintext highlighter-rouge">f32ToParts</code> and <code class="language-plaintext highlighter-rouge">f32FromParts</code></li>
+  <li>code: <code class="language-plaintext highlighter-rouge">f32Parts -&gt; (U8, U8, U8, U8)</code></li>
+  <li>code: <code class="language-plaintext highlighter-rouge">(U8, U8, U8, U8) -&gt; f32Parts</code></li>
+</ul>
+
+<h2 id="dec">Dec</h2>
+<ul>
+  <li>is the default in roc, which is uncommon</li>
+  <li>fixed point with 10^18 decimal places</li>
+  <li>internal I128</li>
+  <li>roc has <code class="language-plaintext highlighter-rouge">withDecimalPoint</code> and <code class="language-plaintext highlighter-rouge">withoutDecimalPoint</code></li>
+  <li>De/Encoding for I128 can be reused for Dec</li>
+</ul>
+
+<h2 id="strings">Strings</h2>
+<ul>
+  <li>ASCII</li>
+  <li>Unicode</li>
+  <li>Utf8</li>
+  <li>Roc has always utf8 strings</li>
+  <li>Zero terminating (How to know when a string ends)</li>
+</ul>
+
+<h2 id="lists">Lists</h2>
+<ul>
+  <li>First try: Just encode the items one after the other</li>
+  <li>Problem: How to know how many items there are when decoding?</li>
+  <li>Solution: Prefix the list with the number of items</li>
+</ul>
+
+<h2 id="records">Records</h2>
+<ul>
+  <li>Like lists we need to know the number of fields</li>
+  <li>Also the name of the field has to be encoded</li>
+</ul>
+
+<h2 id="more-detailed-explanation-of-encoding--decoding-abilities-only-if-chapter-is-gets-not-to-long">More detailed Explanation of Encoding &amp; Decoding Abilities (only if chapter is get’s not to long)</h2>
 
     </main>
     <footer>
