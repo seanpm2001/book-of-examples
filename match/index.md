@@ -8,7 +8,7 @@
     - TDD?
   - Layering on additional capabilities + making code extensible as we do
 
-# Implementing a simplified regular expression matcher
+## Implementing a simplified regular expression matcher
 
 In this chapter we'll write a pattern matcher for a simplified regular expression grammar. At this outset this may seem like a daunting problem, but we'll see it has an elegant recursive solution. Our approach will be to consider substrings in the provided text. If the first element of the text matches the first element the regular expression, we'll repeat the process for the remainder of the text and the remainder of the pattern.
 
