@@ -1,29 +1,513 @@
----
----
+# Chapter M: A Diff Tool
 
-## Outline
-- A brief intro to the [longest common subsequence](https://en.wikipedia.org/wiki/Longest_common_subsequence#Print_the_diff) (LCS) algorithm and its applications.
-- Building visual intuition about the workings of the algorithm via toy examples (a couple of examples quintessentially using DNA base-pair sequences).
-  - Discussing algorithm design choices that make up a visually "good" diff output in practice.
-- Implementing a textbook Roc version of the LCS algorithm.
-- Incrementally introducing enhancements to the implementation, targeted towards using it more effectively as a `diff` tool.
-  - This gives the opportunity to discuss Roc-specific concepts such as:
-    - Abilities such as `Eq` and `Hash`.
-      - The discussion will touch upon the fact the LCS algorithm can be applied to arbitrary homogeneous sequences of elements of any type, as long as the elements of the underlying type can be compared for equality against each other.
-    - Records and associated syntax.
-      - This will be useful for customising the tool, for instance:
-        - Collapsing long sections of matching sequences (this can be parametrised by length).
-        - Colourising the output (different colour schemes may apply).
-- Employing the implemented tool as a `git diff` tool.
-- Discussing and implementing optimisations such as operating on "compressed" versions of the elements such as hashes and lengths.
-- Discussing the connecting points from a `diff` tool to the ability of merging branches in a version-control system context, via the 3-way merge algorithm.
+```
+TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
+```
 
-### In scope, if time permits
+```
+TODO: Terms defined. This will be a list of cornerstone keywords, which will be associated with this chapter. Particularly, these are going to be terms, which haven't been defined in previous chapters.
+```
 
-**Note:** By time, it is meant time from a reader's perspective, in terms of the generally-agreed-upon reader persona and the associated allotted time-per-chapter guideline.
+```
+TODO: Table of contents.
+```
 
-- Improving the implementation, so that the output format - besides basic markers for insertions and deletions - conforms to one of the common `diff` format [specifications](https://www.math.utah.edu/docs/info/diff_3.html).
-- An overview and perhaps implementation of algorithms used by `git diff` and/or other industry-standard tools and their juxtaposition with the LCS algorithm.
+In this chapter, we're going to develop a tool capable of identifying and outputting the differences between two files in a suitable format and presentation. The associated fundamental concepts are integral to version-control systems, because they lie at the very core of operations such as `git diff` and `git merge`.
 
-### Out of scope
-- Version-control system concepts beyond the scope of `diff`-ing files and prerequisites for merging and identifying merge conflicts.
+Let's examine the following output, from the UNIX `diff` tool, between two toy Roc programs. We can safely ignore the `-u` argument for the time being.
+
+```diff
+$ diff -u Hello.roc HelloWorld.roc
+--- Hello.roc <last_modified_timestamp>
++++ HelloWorld.roc <last_modified_timestamp>
+@@ -1,8 +1,8 @@
+-app "hello"
++app "hello-world"
+     packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+     imports [pf.Stdout]
+     provides [main] to pf
+
+ main =
+-    Stdout.line "Hello!"
++    Stdout.line "Hello, World!"
+
+```
+
+Even if you weren't familiar with the UNIX `diff` or similar tools, it's probably quite obvious what's going on. The command output tells you that the given files differ in terms of two lines only - namely, the first and last lines, namely the lines defining the app name and outputting a string to the standard output.
+
+By the end of this chapter, you will have developed a Roc tool, which outputs identical information, given the same two input files.
+
+## Section N.1: Representation
+
+In the above example, the output was presented intuitively enough, and this enabled us to identify easily what it conveys. For completeness, the listings of the two files are as follows:
+```roc
+$ cat Hello.roc
+app "hello"
+    packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+    imports [pf.Stdout]
+    provides [main] to pf
+
+main =
+    Stdout.line "Hello!"
+
+$ cat HelloWorld.roc
+app "hello-world"
+    packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+    imports [pf.Stdout]
+    provides [main] to pf
+
+main =
+    Stdout.line "Hello, World!"
+
+```
+
+The difference between same two files - without any modifications to the files themselves - could be represented alternatively like so:
+```diff
+$ uglydiff Hello.roc HelloWorld.roc
+--- Hello.roc <last_modified_timestamp>
++++ HelloWorld.roc <last_modified_timestamp>
+@@ -1,8 +1,8 @@
++app "hello-world"
+-app "hello"
+     packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+     imports [pf.Stdout]
+     provides [main] to pf
+
+ main =
++    Stdout.line "Hello, World!"
+-    Stdout.line "Hello!"
+
+```
+
+And even like so:
+```diff
+$ uglierdiff Hello.roc HelloWorld.roc
+--- Hello.roc <last_modified_timestamp>
++++ HelloWorld.roc <last_modified_timestamp>
+@@ -1,8 +1,8 @@
+-app "hello"
+-    packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+-    imports [pf.Stdout]
+-    provides [main] to pf
+-
+-main =
+-    Stdout.line "Hello!"
+-
++app "hello-world"
++    packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
++    imports [pf.Stdout]
++    provides [main] to pf
++
++main =
++    Stdout.line "Hello, World!"
++
+```
+
+Now, what makes the output from `diff` much more useful and immediately intuitive than its counterparts from the hypothetical `uglydiff` and `uglierdiff` tools? It succinctly presents the actual differences and doesn't distract away from those differences. In the hypothetical, non-intuitive cases, we see that - despite those being still valid representations of differences - the degree of usefulness isn't as high as it could be. In the first case, instead of the more natural flow "from this file, we arrive at that file", we are presented with a "we introduce this, whilst originally we had that", which awkwardly interrupts the reader's flow. In the latter case, no useful intuition regarding the actual differences is conveyed, because any two distinct files could be crudely viewed as differing in their corresponding line sequences atomically. In other words, we could replace all lines from the first file with all lines from the second file and this, effectively, constitutes the difference between them.
+
+## Section N.2: Longest Common Subsequence (LCS)
+
+In this section, we'll get acquainted with a data structure which will enable us to express all possible paths that correspond to constructing a target file from a source file, based on a number of insertion, deletion and matching operations. Then we'll build intuition, regarding how we could heuristically traverse said data structure, in order to be able to choose a single path, which will be the path ultimately presented as the one, succinctly and intuitively representing the difference between the two files.
+
+This automatically means that we wouldn't want to be considering matching blocks of lines from the two files as differences (as it was unfortunately the case with the hypothetical `uglierdiff` tool). This is where an important observation lies - one key ingredient we need is a method for identifying the longest possible stretches of matching sequences between the given files. The other key ingredient is that, if we're to view a diff between two files as a means for transforming one file into another one (even though this may not be be the actual desired outcome at all, you'll see that this is a very useful conceptual representation), then the first one could be viewed as a "source", and the second one - as a "target". Correspondingly, the chain of operations transforming our source into the target will be the ultimate diff output. Therefore, in addition to identifying long stretches of matching lines between the two files, we'll also be interested in thinking in terms of removals of lines from the source file and preservations (or insertions, with respect to the former) of lines that are already present in the target file, but not in the former. Naturally, we won't be performing any modifications to stretches of matching elements between the two sequences. Those are the parts of our output which we would ideally like to keep out of focus as much as possible. They could be useful to provide context, but they shouldn't be at the center of attention.
+
+This particular representation is also referred to as _unified format_, in the context of the GNU `diff` tool, and that was the relevance of the `-u` command-line argument  in the opening paragraph (alternatively accessible via the `--unified` flag). Some alternative representations, which we won't be discussing in this chapter are the _normal format_ (`--normal`) and _context format_ (`-c` or `--context`). They're closely related and are possible to be derived - with relatively minor modifications - using the approaches which we'll get acquianted with in this chapter. Naturally, for further details and even more possible representations, you're welcome to refer to GNU `diff`'s `man` pages.
+
+Let's step back a bit and try to think in what domains we'd expect the kind of algorithms that we need in this case to originate. Given two or more sequences of comparable-for-equality items, it is of interest to identify the longest possible stretches of items which are equal between the sequences under consideration.
+
+```
+## TODO: A brief paragraph about applications, such as string similarity and bioinformatics.
+```
+
+For simplicity and ease of visualization, let's consider pairs of strings of characters, which are equivalent - relative to each other - to the source-code example from the beginning section. Two arbitrary string sequences - where each character is a line in a file - which meet these needs are the following ones:
+```bash
+$ cat source.txt
+A
+B
+C
+D
+E
+F
+G
+H
+```
+```bash
+$ cat target.txt
+I
+B
+C
+D
+E
+F
+J
+H
+```
+
+The corresponding most intuitive diff path is as follows:
+```diff
+$ diff -u source.txt target.txt
+--- source.txt <last_modified_timestamp>
++++ target.txt <last_modified_timestamp>
+@@ -1,8 +1,8 @@
+@@ -1,8 +1,8 @@
+-A
++I
+ B
+ C
+ D
+ E
+ F
+-G
++J
+ H
+```
+
+```
+# TODO: Ensure consistent terminology, in terms of the input lists/strings/arrays/sequences. It may be confusing, if referred to as sequences.
+```
+
+As discussed, we'll first focus on finding a way to conveniently identify and represent all possible paths from the source sequence to the target sequence. Only then we'll be able to pick the path which conveys the difference in a generally intuitive way, given the aforementioned presentation constraints we're interested to enforce.
+
+We'll resort to a class of algorithms for solving what's referred to as the _Longest Common Subsequence_ (LCS) problem. One of the most common problem-solving approaches is breaking a problem into equivalent but smaller sub-problems. This very intuition is also applicable in our case. In order to identify the longest common subsequence between any two lists of elements, we observe that we would start with an empty common subsequence, and then seek to incrementally find matching elements in each list, in order to identify longer and longer subsequences until we've exhausted at least one of the lists. There exist no general shortcuts which would allow us to generally identify the longest common subsequence without iterating over the contents of both lists first. That's why the problem of identifying a longest common subsequence gets conveniently and intuitively broken down to be defined recursively in terms of the solutions at different iteration steps. The longest common sequence as of the current step _t_ is defined to be equal to the longest common subsequence as of step _t-1_, in conjunction with the best possible solution at step _t_, among the following options:
+- the two current elements in each list are already a match, or
+- removing the current element from the source list results in a match, or
+- inserting the next element from the target list results in a match.
+
+Let's see how we might implement a Roc function, which will give us an arbitrary longest subsequence, that is common to two lists of elements:
+```roc
+lcs : List a, List a -> List a where a implements Eq
+lcs = \xxs, yys ->
+    when (xxs, yys) is
+        ([], _) -> []
+        (_, []) -> []
+        _ ->
+            { before: x, others: xs } = List.split xxs 1
+            { before: y, others: ys } = List.split yys 1
+            if x == y then
+                List.concat x (lcs xs ys)
+            else
+                longest (lcs xxs ys) (lcs xs yys)
+
+longest = \xs, ys ->
+    if List.len xs > List.len ys then xs else ys
+```
+
+Before we discuss the concrete Roc features that we utilize in this excerpt, let's briefly go over the core idea behind the `lcs` function. It takes two lists and recursively calls itself in order to return an arbitrary longest common sequence, with respect to the input lists. The recursive calls follow the logic discussed above, namely they contain solutions to sub-problems, which are then concatenated together to form a valid solution to the main problem. Concretely, with respect to any two lists that are being considered as part of the execution flow, we check whether either of them is empty. If yes, we know that we've traversed as much as we could along that particular list and that's our cue to stop our iteration. If they're both non-empty, however, then we inspect the elements at their very beginning. If the elements are equal, then we take a note of the element value and we add it as an element belonging to the longest common sequence solution. Then, we analogously inspect the remainders of the lists. If the elements aren't equal, we branch off recursively to identify from which list we should skip the non-matching element, in order to ultimately arrive at a longest possible solution. For this purpose, we also employ an auxiliary function `longest`, which ensures that we pick the longest branch, with respect to any solution to a sub-problem.
+
+In the `lcs` function, we take advantage of multiple Roc features. First, the type parameter `a` indicates that this function works with respect to lists of an arbitrary type, as long as that's the type associated with both lists. The constraint `where a implements Eq` signifies that we're making use of the abilities feature. In this case, we refer to the built-in `Eq` ability which requires that the corresponding type implements this ability, in order for us to be able to compare any two associated values for equality. In the function body, we perform pattern matching on both of the input lists, via packing them in a tuple. This allows us to define our stopping condition - we check if either list is empty, and if yes - we return an empty list. This is handy, because it allows us to recursively call the same function to traverse the lists and extract an arbitrary longest common sequence at any execution step. We also note the employment of the standard library `List.split` function, which takes an arbitrary list and an index, and splits the list at that index, returning a record consisting of two fields, namely `before` and `others` lists. The former contains all the elements preceding the input index, at which we want to split our original list, and the latter - all elements that follow afterwards. Please, note that the function doesn't trim away any elements, and that at least one of the returned record fields may be an empty list. In our case, however, we don't need to check whether or not the `before` list is empty, because that was already taken care of by the base cases in our preceding pattern matching expressions.
+
+Please, note that - as discussed above - as of step _t_, multiple paths may correspond to the longest solution. This is expected, because in this first stage, we are only interested in finding _all_ paths, and not necessarily picking a "best" path just yet.
+
+You'll also notice that each complete path (that is, a solution to entire problem of going from a source list to a target list) corresponds to a unique diff presentation.
+
+```
+## TODO:
+- A narrative transition and a couple of equations which briefly introduce how the dynamic programming table is built.
+S[i, j] = ...
+where S[i, j] corresponds to the solution as of current step _t_ being at index _i_ in the first list and index _j_ in the second one, i.e., X_i and Y_j, respectively.
+```
+
+Conceptually, we've already built the data structure which will allow us to recover any path or a sub-path that we would like, corresponding to a full or partial solution to our problem of identifying differences between two lists of elements.
+
+The conventional way to build the data structure is in a tabular form. We arbitrarily set the row headers to correspond to the elements of the source list and the column headers - to those of the target one.
+
+```
+## TODO:
+- Strip the table to show only partially built one, to demonstrate the steps.
+- Improve the narrative around table construction.
+```
+|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   A   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   B   |   0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
+|   C   |   0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
+|   D   |   0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
+|   E   |   0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
+|   F   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   G   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   6   |
+
+As you can see, we conventionally take a note of the length of the longest common subsequence found as of a given iteration step. This isn't really fundamental to our difference-representation problem, but will come in handy at the stage when we'll need to heuristically decide which path to present as the ultimate solution. The other bit of information that we take a note of is somehow more relevant, namely the operation which we perform at a given iteration step, based on the equality between the current list elements `X`<sub>`i`</sub> and `Y`<sub>`j`</sub> as of that iteration step.
+
+The complete table is as follows.
+|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   A   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   B   |   0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
+|   C   |   0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
+|   D   |   0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
+|   E   |   0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
+|   F   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   G   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   6   |
+
+Once we've built the table, it becomes obvious that all solutions correspond to movements along the table cells in one of three possible directions at a time: right, down or diagonally right-down. The complete paths - which are effectively possible solutions to the diff problem - correspond to moves from the top left cell to the bottom right cell.
+
+The most intuitive path and solution discussed before is the following one:
+|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   A   |  ↑0   |  ←0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   B   |   0   |   0   |  ↖1   |   1   |   1   |   1   |   1   |   1   |   1   |
+|   C   |   0   |   0   |   1   |  ↖2   |   2   |   2   |   2   |   2   |   2   |
+|   D   |   0   |   0   |   1   |   2   |  ↖3   |   3   |   3   |   3   |   3   |
+|   E   |   0   |   0   |   1   |   2   |   3   |  ↖4   |   4   |   4   |   4   |
+|   F   |   0   |   0   |   1   |   2   |   3   |   4   |  ↖5   |   5   |   5   |
+|   G   |   0   |   0   |   1   |   2   |   3   |   4   |  ↑5   |  ←5   |   5   |
+|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |  ↖6   |
+
+
+Correspondingly, the least intuitive solution corresponds to this path:
+|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   A   |  ↑0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
+|   B   |  ↑0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
+|   C   |  ↑0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
+|   D   |  ↑0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
+|   E   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
+|   F   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   G   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
+|   H   |  ↑0   |  ←0   |  ←1   |  ←2   |  ←3   |  ←4   |  ←5   |  ←5   |  ←6   |
+
+This visual representation enables us to build further intuition regarding the desired solution form. Heuristically speaking, we observe that favorable solutions will involve, wherever applicable, long stretches of deletions from the source list and long stretches of insertions from the target list, interspersed with long stretches of matching (i.e., common) subsequences.
+
+Now let's try to build the data structure in Roc.
+
+```roc
+Table : Dict (U64, U64) U64
+
+buildTable : List a, List a -> Table where a implements Eq
+buildTable = \x, y ->
+    List.walkWithIndex
+        x
+        (Dict.empty {})
+        (\tableX, xi, i ->
+            List.walkWithIndex
+                y
+                tableX
+                (\tableY, yj, j ->
+                    curr =
+                        if i == 0 || j == 0 then
+                            0
+                        else if xi == yj then
+                            prevMatch = Dict.get tableY (i - 1, j - 1) |> Result.withDefault 0
+                            prevMatch + 1
+                        else
+                            prevInsert = Dict.get tableY (i, j - 1) |> Result.withDefault 0
+                            prevDelete = Dict.get tableY (i - 1, j) |> Result.withDefault 0
+                            Num.max prevInsert prevDelete
+
+                    Dict.insert tableY (i, j) curr
+                )
+        )
+```
+
+```
+## TODO: Code walkthrough.
+## TODO: Narrative transition to diff and diffHelp.
+```
+
+```roc
+beginningMark = ""
+
+diff : List Str, List Str -> List Str
+diff = \x, y ->
+    xPrim = List.prepend x beginningMark
+    yPrim = List.prepend y beginningMark
+    diffHelp (buildTable xPrim yPrim) xPrim yPrim (List.len x) (List.len y)
+
+diffHelp : Table, List Str, List Str, U64, U64 -> List Str
+diffHelp = \lcs, x, y, i, j ->
+    (xi, up) =
+        if i > 0 then
+            (
+                (List.get x i |> Result.withDefault beginningMark),
+                (Dict.get lcs (i - 1, j) |> Result.withDefault 0),
+            )
+        else
+            (beginningMark, 0)
+
+    (yj, left) =
+        if j > 0 then
+            (
+                (List.get y j |> Result.withDefault beginningMark),
+                (Dict.get lcs (i, j - 1) |> Result.withDefault 0),
+            )
+        else
+            (beginningMark, 0)
+
+    if i > 0 && j > 0 && xi == yj then
+        List.append (diffHelp lcs x y (i - 1) (j - 1)) "  $(xi)"
+    else if j > 0 && (i == 0 || left >= up) then
+        List.append (diffHelp lcs x y i (j - 1)) "+ $(yj)"
+    else if i > 0 && (j == 0 || left < up) then
+        List.append (diffHelp lcs x y (i - 1) j) "- $(xi)"
+    else
+        []
+```
+
+```
+## TODO: Code walkthrough.
+```
+
+## Section N.3: Colorized Output
+
+```
+## TODO: Taking it up a notch further.
+Colourizing the output, but also discussing how this isn't by any means a general enough solution, that it wouldn't honour terminal emulator themes etc.
+It just forces lines corresponding to certain operations to be coloured with particular colours, regardless of any external context.
+```
+
+Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations, that constitute the diff are. It is important to note that the standard, GNU `diff` tool doesn't provide color-coding per se, but it instead formats the output in a standardized way, so that this representation could optionally undergo subsequent syntax highlighting via other tools, editors and IDEs, as applicable.
+
+In this section we'll briefly introduce some rudimentary color-coding to our diff output, and in subsequent sections we'll generalize our diff post-processing logic, which will enable us to perform the color-coding in a bit more elegant manner as well as do other post-processing steps, with the intention of increasing the degree of interpretability of the output.
+
+```
+TODO: Explanation of terminal colours and a link to Wikipedia.
+```
+
+```roc
+green = "\u(001b)[6;33;32m"
+red = "\u(001b)[6;33;31m"
+resetFormatting = "\u(001b)[0m"
+
+Color : [GreenFg, RedFg]
+colorizeText : Color, Str -> Str
+colorizeText = \color, input ->
+    when color is
+        GreenFg -> "$(green)$(input)$(resetFormatting)"
+        RedFg -> "$(red)$(input)$(resetFormatting)"
+```
+
+And just like this, we're able to arbitrarily apply colors to text. Now, we can actually color-code our diff operations - insertion in green and deletion in red.
+
+```roc
+    else if j > 0 && (i == 0 || left >= up) then
+        List.append (diffHelp lcs x y i (j - 1)) (colorizeText GreenFg "+ $(yj)")
+    else if i > 0 && (j == 0 || left < up) then
+        List.append (diffHelp lcs x y (i - 1) j) (colorizeText RedFg "- $(xi)")
+```
+
+```
+## TODO:
+- Explanation.
+- Narrative connection to the following section.
+```
+
+## Section N.4: Diff Context
+```
+## TODO: Intro to the section and a suitable transition from the previous one.
+```
+
+This serves the job as advertized, but if we consider real-world examples for file changes, it is not at all unlikely that a change in a file may involve a handful of lines, whilst the total file size in terms of number of lines may be in the hundreds or thousands.
+
+This is actually a tricky class of cases that our tool, at the current stage of its development, is likely to not be able to handle well at all. We might have to manually scroll through the output or filter by diff marks, in order to identify where _exactly_ the differences are. This suggests that most of the context in such cases isn't really useful, if we're going to filtering it out eventually. What could we do to improve our tool, with respect to this? We might want to introduce the notion of context, in terms of line adjacency, and only display up to a certain number of lines away from each contiguous set of lines, associated with diff marks. This is essentially how the GNU `diff` tool works as well, in some of its modes.
+
+First, let's adapt our implementation, so that it can carry some metadata alongside the actual content that's being compared. Most naturally, the associated number with a given line in a file constitutes a handy bit of metadata that we wouldn't mind having around.
+
+```roc
+Line := { lineNumber : U64, content : Str } implements [Eq { isEq: areLinesEqual }]
+DiffOp : [Insertion, Deletion, Match]
+DiffLine : { op : DiffOp, source : Line, target : Line }
+Diff : List DiffLine
+
+areLinesEqual : Line, Line -> Bool
+areLinesEqual = \@Line { content: x }, @Line { content: y } -> x == y
+
+beginningMark = @Line { lineNumber: 0, content: "" }
+
+toLines : List Str -> List Line
+toLines = \list ->
+    List.mapWithIndex list \elem, idx -> @Line {
+            lineNumber: idx + 1,
+            content: elem,
+        }
+```
+
+```roc
+diffHelp : Table, List Line, List Line, U64, U64 -> Diff
+```
+
+Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers, as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding file this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` also includes in its output.
+
+## Section N.6: Unified Format
+```
+TODO: Code and narrative.
+```
+
+## Section N.7: Putting It All Together
+```
+TODO:
+- Utilizing the functionality as a Roc library code (interface in this case) called from a Roc tool.
+- Discussion on how our tool may be utilized as a `git diff` tool.
+```
+
+```
+$ roc build main.roc --output rocdiff
+0 errors and 0 warnings found in 522 ms
+ while successfully building:
+
+    rocdiff
+```
+```diff
+$ ./rocdiff Hello.roc HelloWorld.roc
+- app "hello"
++ app "hello-world"
+      packages { pf: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br" }
+      imports [pf.Stdout]
+      provides [main] to pf
+
+  main =
+-     Stdout.line "Hello!"
++     Stdout.line "Hello, World!"
+
+```
+
+```bash
+$ git difftool --extcmd=`realpath ./rocdiff`
+```
+Or if you don't have any outstanding unstaged changes, then you could see for example the diff between any arbitrary two commits, for example, `HEAD~..HEAD` will show you the most recent commit:
+```bash
+$ git difftool --extcmd=`realpath ./rocdiff` HEAD~..HEAD
+```
+
+```ini
+# .git/config
+[diff]
+    tool = rocdiff
+
+[difftool "rocdiff"]
+    cmd = <full_path_to_rocdiff_dir>/rocdiff "$LOCAL" "$REMOTE"
+```
+
+Or alternatively this could be set from the command line, with respect to the local repository:
+```
+git config diff.tool rocdiff
+git config difftool.rocdiff.cmd "<full_path_to_rocdiff_dir>/rocdiff \$LOCAL \$REMOTE"
+```
+
+Adding the `--global` fiag applies these changes globally, and the configured `difftool` could be utilized in any `git` repository on the same host.
+
+```bash
+$ git difftool
+```
+
+Just as above - and as in the case of `git diff` itself, an arbitrary diff range could be specified, in case there are no unstaged changes in the current `git` repository.
+$ git difftool HEAD~..HEAD
+```
+
+## Section N.n: Summary
+
+```
+TODO: Summary.
+```
+
+## Section N.n+1: Exercises
+
+```
+TODO:
+- Extending the tool to output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format.
+```
