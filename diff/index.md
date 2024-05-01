@@ -7,7 +7,7 @@
 TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
 ```
 
-Terms defined: abilities, diff, dynamic programming, longest common subsequence, memoization, merge, version-control system
+Terms defined: ability, diff, dynamic programming, longest common subsequence, memoization, merge, platform, version-control system
 
 1. [Representation](#section-n1-representation)
 2. [Longest Common Subsequence (LCS)](#section-n2-longest-common-subsequence-lcs)
@@ -453,6 +453,28 @@ TODO:
 - Utilizing the functionality as a Roc library code (interface in this case) called from a Roc tool.
 - Discussion on how our tool may be utilized as a `git diff` tool.
 ```
+
+In order to be able to employ our diff functionality in the real world, we'll need to promote it to an executable, which we'll then run against arbitrary input files.
+Let's create a file called `main.roc` and import the exposed `diffFormat` function, which will do all associated heavylifting.
+
+```roc
+app "diff"
+    packages {
+        cli: "https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br",
+    }
+    imports [
+        cli.Stdout,
+        cli.Stderr,
+        cli.Arg,
+        cli.Task.{ Task, await },
+        cli.File,
+        cli.Path,
+        Lcs.{ diffFormat },
+    ]
+    provides [main] to cli
+```
+
+We'll be basing our diff tool on top of the `basic-cli` platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we're importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arugments and perform file reading operations.
 
 ```
 $ roc build main.roc --output rocdiff
