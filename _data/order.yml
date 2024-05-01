@@ -7,6 +7,7 @@ chapters:
 - logger
 - prng
 - binary
+- compress
 - ci
 - editor
 - parser

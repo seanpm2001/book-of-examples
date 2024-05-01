@@ -1,1 +1,1 @@
-Sitemap: /book-of-examples/sitemap.xml
+Sitemap: http://localhost:4000/book-of-examples/sitemap.xml

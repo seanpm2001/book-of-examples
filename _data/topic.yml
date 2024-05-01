@@ -18,6 +18,11 @@
   github:
   - "faldor20"
 
+- slug: "compress"
+  title: "Compression"
+  github:
+  - "isaacvando"
+
 - slug: "conduct"
   title: "Code of Conduct"
 

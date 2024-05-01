@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Software Design by Example in Roc</title>
+<link rel="shortcut icon" type="image/x-icon" href="/book-of-examples/favicon.svg">
+<link rel="stylesheet" href="/book-of-examples/bw.css" type="text/css">
+<link rel="stylesheet" href="/book-of-examples/site.css" type="text/css">
+
+  </head>
+  <body>
+    <main>
+      <h1>Compression</h1>
+<p class="author">Written by <a href="https://github.com/isaacvando">Isaac Van Doren</a>
+</p>
+
+<h1 id="notes">Notes</h1>
+<ul>
+  <li>I don’t forsee this code needing to depend on any other chapters or libraries.</li>
+  <li>I have an implementation that mostly works, but there are some bugs that need to be ironed out.</li>
+</ul>
+
+<h1 id="outline">Outline</h1>
+<h2 id="intro">Intro</h2>
+<ul>
+  <li>Compression is extremely useful.</li>
+  <li>It is used in many domains like web servers, file storage, etc.</li>
+  <li>One ubiquitous compression tool is GZIP.</li>
+  <li>One of the core components of GZIP is the LZ77 compression algorithm.</li>
+  <li>LZ77 is simple yet powerful.</li>
+  <li>We will implement LZ77 in this chapter.</li>
+</ul>
+
+<h2 id="lz77">LZ77</h2>
+<ul>
+  <li>LZ77 is a sliding window algorithm.</li>
+  <li>There is a search buffer and a lookahead buffer. The search buffer contains the bytes that will be searched for matches and the lookahead buffer is the piece of data currently being compressed.</li>
+  <li>When the beginning of the look ahead buffer matches a segment of bytes somewhere in the search buffer, the lookahead buffer will be “slid” to exclude the match.</li>
+  <li>The match can then be represented as three values: the offset to locate the match in the search buffer, the length of the match, and the next character following the match.</li>
+  <li>This triple will then be appended to the compressed output so far.</li>
+  <li>When the beginning of the look ahead buffer does not match anything in the search buffer, the offset and length will both be 0 and only the next character will be used.</li>
+  <li>We will use a direct encoding of the triples into bytes. Note that this is not super space efficient, and is where Huffman Coding comes in.</li>
+</ul>
+
+<h2 id="sliding">Sliding</h2>
+<ul>
+  <li>The sliding window aspect of this algorithm means that it is possible to do streaming of both encoding and decoding. We will not do this in our implementation however.</li>
+</ul>
+
+<h2 id="roc-details">Roc Details</h2>
+<ul>
+  <li>First we will implement encoding to a list of triples followed by decoding into the original input.</li>
+  <li>We can test the algorithm by encoding and decoding the same input and then validating that the result equals the original input.</li>
+  <li>We can then implement encoding the list of triples to a list of bytes and the decoding of bytes into triples. (Or maybe this should all be done in one pass in the end for performance?)</li>
+</ul>
+
+    </main>
+    <footer>
+  Copyright © the contributors 2024
+  &middot;
+  <a href="https://github.com/roc-lang/book-of-examples">GitHub repository</a>
+</footer>
+
+  </body>
+</html>
