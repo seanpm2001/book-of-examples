@@ -1,7 +1,7 @@
 ---
 ---
 
-# Chapter M: A Diff Tool
+# Chapter N: A Diff Tool
 
 ```
 TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
