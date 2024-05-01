@@ -1,16 +1,22 @@
+---
+---
+
 # Chapter M: A Diff Tool
 
 ```
 TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
 ```
 
-```
-TODO: Terms defined. This will be a list of cornerstone keywords, which will be associated with this chapter. Particularly, these are going to be terms, which haven't been defined in previous chapters.
-```
+Terms defined: abilities, diff, dynamic programming, longest common subsequence, memoization, merge, version-control system
 
-```
-TODO: Table of contents.
-```
+1. [Representation](#section-n1-representation)
+2. [Longest Common Subsequence (LCS)](#section-n2-longest-common-subsequence-lcs)
+3. [Colorized Output](#section-n3-colorized-output)
+4. [Diff Context](#section-n4-diff-context)
+5. [Unified Format](#section-n5-unified-format)
+6. [Putting It All Together](#section-n6-putting-it-all-together)
+7. [Summary](#section-n7-summary)
+8. [Exercises](#section-n8-exercises)
 
 In this chapter, we're going to develop a tool capable of identifying and outputting the differences between two files in a suitable format and presentation. The associated fundamental concepts are integral to version-control systems, because they lie at the very core of operations such as `git diff` and `git merge`.
 
@@ -168,7 +174,7 @@ $ diff -u source.txt target.txt
 
 As discussed, we'll first focus on finding a way to conveniently identify and represent all possible paths from the source sequence to the target sequence. Only then we'll be able to pick the path which conveys the difference in a generally intuitive way, given the aforementioned presentation constraints we're interested to enforce.
 
-We'll resort to a class of algorithms for solving what's referred to as the _Longest Common Subsequence_ (LCS) problem. One of the most common problem-solving approaches is breaking a problem into equivalent but smaller sub-problems. This very intuition is also applicable in our case. In order to identify the longest common subsequence between any two lists of elements, we observe that we would start with an empty common subsequence, and then seek to incrementally find matching elements in each list, in order to identify longer and longer subsequences until we've exhausted at least one of the lists. There exist no general shortcuts which would allow us to generally identify the longest common subsequence without iterating over the contents of both lists first. That's why the problem of identifying a longest common subsequence gets conveniently and intuitively broken down to be defined recursively in terms of the solutions at different iteration steps. The longest common sequence as of the current step _t_ is defined to be equal to the longest common subsequence as of step _t-1_, in conjunction with the best possible solution at step _t_, among the following options:
+We'll resort to a class of algorithms for solving what's referred to as the _Longest Common Subsequence_ (LCS) problem. One of the most common problem-solving approaches is breaking a problem into equivalent but smaller sub-problems. This very intuition is also applicable in our case. In order to identify the longest common subsequence between any two lists of elements, we observe that we would start with an empty common subsequence, and then seek to incrementally find matching elements in each list, in order to identify longer and longer subsequences until we've exhausted at least one of the lists. There exist no general shortcuts which would allow us to generally identify the longest common subsequence without iterating over the contents of both lists first. That's why the problem of identifying a longest common subsequence gets conveniently and intuitively broken down to be defined recursively in terms of the solutions at different iteration steps. The longest common subsequence as of the current step _t_ is defined to be equal to the longest common subsequence as of step _t-1_, in conjunction with the best possible solution at step _t_, among the following options:
 - the two current elements in each list are already a match, or
 - removing the current element from the source list results in a match, or
 - inserting the next element from the target list results in a match.
@@ -192,13 +198,13 @@ longest = \xs, ys ->
     if List.len xs > List.len ys then xs else ys
 ```
 
-Before we discuss the concrete Roc features that we utilize in this excerpt, let's briefly go over the core idea behind the `lcs` function. It takes two lists and recursively calls itself in order to return an arbitrary longest common sequence, with respect to the input lists. The recursive calls follow the logic discussed above, namely they contain solutions to sub-problems, which are then concatenated together to form a valid solution to the main problem. Concretely, with respect to any two lists that are being considered as part of the execution flow, we check whether either of them is empty. If yes, we know that we've traversed as much as we could along that particular list and that's our cue to stop our iteration. If they're both non-empty, however, then we inspect the elements at their very beginning. If the elements are equal, then we take a note of the element value and we add it as an element belonging to the longest common sequence solution. Then, we analogously inspect the remainders of the lists. If the elements aren't equal, we branch off recursively to identify from which list we should skip the non-matching element, in order to ultimately arrive at a longest possible solution. For this purpose, we also employ an auxiliary function `longest`, which ensures that we pick the longest branch, with respect to any solution to a sub-problem.
+Before we discuss the concrete Roc features that we utilize in this excerpt, let's briefly go over the core idea behind the `lcs` function. It takes two lists and recursively calls itself in order to return an arbitrary longest common subsequence, with respect to the input lists. The recursive calls follow the logic discussed above, namely they contain solutions to sub-problems, which are then concatenated together to form a valid solution to the main problem. Concretely, with respect to any two lists that are being considered as part of the execution flow, we check whether either of them is empty. If yes, we know that we've traversed as much as we could along that particular list and that's our cue to stop our iteration. If they're both non-empty, however, then we inspect the elements at their very beginning. If the elements are equal, then we take a note of the element value and we add it as an element belonging to the longest common subsequence solution. Then, we analogously inspect the remainders of the lists. If the elements aren't equal, we branch off recursively to identify from which list we should skip the non-matching element, in order to ultimately arrive at a longest possible solution. For this purpose, we also employ an auxiliary function `longest`, which ensures that we pick the longest branch, with respect to any solution to a sub-problem.
 
-In the `lcs` function, we take advantage of multiple Roc features. First, the type parameter `a` indicates that this function works with respect to lists of an arbitrary type, as long as that's the type associated with both lists. The constraint `where a implements Eq` signifies that we're making use of the abilities feature. In this case, we refer to the built-in `Eq` ability which requires that the corresponding type implements this ability, in order for us to be able to compare any two associated values for equality. In the function body, we perform pattern matching on both of the input lists, via packing them in a tuple. This allows us to define our stopping condition - we check if either list is empty, and if yes - we return an empty list. This is handy, because it allows us to recursively call the same function to traverse the lists and extract an arbitrary longest common sequence at any execution step. We also note the employment of the standard library `List.split` function, which takes an arbitrary list and an index, and splits the list at that index, returning a record consisting of two fields, namely `before` and `others` lists. The former contains all the elements preceding the input index, at which we want to split our original list, and the latter - all elements that follow afterwards. Please, note that the function doesn't trim away any elements, and that at least one of the returned record fields may be an empty list. In our case, however, we don't need to check whether or not the `before` list is empty, because that was already taken care of by the base cases in our preceding pattern matching expressions.
+In the `lcs` function, we take advantage of multiple Roc features. First, the type parameter `a` indicates that this function works with respect to lists of an arbitrary type, as long as that's the type associated with both lists. The constraint `where a implements Eq` signifies that we're making use of the abilities feature. In this case, we refer to the built-in `Eq` ability which requires that the corresponding type implements this ability, in order for us to be able to compare any two associated values for equality. In the function body, we perform pattern matching on both of the input lists, via packing them in a tuple. This allows us to define our stopping condition - we check if either list is empty, and if yes - we return an empty list. This is handy, because it allows us to recursively call the same function to traverse the lists and extract an arbitrary longest common subsequence at any execution step. We also note the employment of the standard library `List.split` function, which takes an arbitrary list and an index, and splits the list at that index, returning a record consisting of two fields, namely `before` and `others` lists. The former contains all the elements preceding the input index, at which we want to split our original list, and the latter - all elements that follow afterwards. Please, note that the function doesn't trim away any elements, and that at least one of the returned record fields may be an empty list. In our case, however, we don't need to check whether or not the `before` list is empty, because that was already taken care of by the base cases in our preceding pattern matching expressions.
 
 Please, note that - as discussed above - as of step _t_, multiple paths may correspond to the longest solution. This is expected, because in this first stage, we are only interested in finding _all_ paths, and not necessarily picking a "best" path just yet.
 
-You'll also notice that each complete path (that is, a solution to entire problem of going from a source list to a target list) corresponds to a unique diff presentation.
+You'll also notice that each complete path (that is, a solution leading from a source list to a target list) corresponds to a unique diff presentation.
 
 ```
 ## TODO:
@@ -207,7 +213,7 @@ S[i, j] = ...
 where S[i, j] corresponds to the solution as of current step _t_ being at index _i_ in the first list and index _j_ in the second one, i.e., X_i and Y_j, respectively.
 ```
 
-Conceptually, we've already built the data structure which will allow us to recover any path or a sub-path that we would like, corresponding to a full or partial solution to our problem of identifying differences between two lists of elements.
+Conceptually, we've already built the data structure which will allow us to recover any path or a sub-path, corresponding to a full or partial solution to our problem of identifying differences between two lists of elements.
 
 The conventional way to build the data structure is in a tabular form. We arbitrarily set the row headers to correspond to the elements of the source list and the column headers - to those of the target one.
 
@@ -304,6 +310,9 @@ buildTable = \x, y ->
                 )
         )
 ```
+
+Our `buildTable` function takes two arbitrary lists of the same type - which itself is guaranteed to implement the built-in `Eq` ability - and builds an LCS table, which is then returned to the caller. The table is of type `Dict (U64, U64) U64` and this corresponds to a dictionary whose keys are tuples of `(i, j)` table indices, both of type `U64` and the value corresponds to the length of the longest common subsequence associated with the sublists of the input lists, ending at indices `i` and `j`. We utilize the standard library `List.walkWithIndex` function to iterate row by row, and element by element, within each row.
+`Result.withDefault 0` is logically never expected to become effective, because the indices `i` and `j` are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via `if i == 0 || j == 0 then 0`. Alternatively, we could've pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and `crash`ed, if we ever got an error of type `KeyNotFound`, because something fundamental had gone wrong at that stage, and wasn't possible to be caught via our test suite.
 
 ```
 ## TODO: Code walkthrough.
@@ -433,12 +442,12 @@ diffHelp : Table, List Line, List Line, U64, U64 -> Diff
 
 Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers, as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding file this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` also includes in its output.
 
-## Section N.6: Unified Format
+## Section N.5: Unified Format
 ```
 TODO: Code and narrative.
 ```
 
-## Section N.7: Putting It All Together
+## Section N.6: Putting It All Together
 ```
 TODO:
 - Utilizing the functionality as a Roc library code (interface in this case) called from a Roc tool.
@@ -496,16 +505,17 @@ $ git difftool
 ```
 
 Just as above - and as in the case of `git diff` itself, an arbitrary diff range could be specified, in case there are no unstaged changes in the current `git` repository.
+```bash
 $ git difftool HEAD~..HEAD
 ```
 
-## Section N.n: Summary
+## Section N.7: Summary
 
 ```
 TODO: Summary.
 ```
 
-## Section N.n+1: Exercises
+## Section N.8: Exercises
 
 ```
 TODO:
