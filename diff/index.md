@@ -211,17 +211,53 @@ You'll also notice that each complete path (that is, a solution leading from a s
 - A narrative transition and a couple of equations which briefly introduce how the dynamic programming table is built.
 S[i, j] = ...
 where S[i, j] corresponds to the solution as of current step _t_ being at index _i_ in the first list and index _j_ in the second one, i.e., X_i and Y_j, respectively.
+
+First property:
+LCS(X ^ c, Y ^ c) = LCS(X, Y) ^ c, for all symbols c
+e.g.,
+LCS("ACGGT", "TCGT") = LCS("ACGG", "TCG") ^ "T" = LCS("ACG", "TC") ^ "GT"
+
+Second property:
+For all p and q, such that p != q, i.e., they are distinct symbols,
+LCS(X ^ p, Y ^ q) is in the set LCS(X ^ p, Y) <set_union> LCS (X, Y ^ q) and not only this but it is also one of the maximal-length strings in that set.
+
+For example,
+LCS("ACGGTA", "TCGTC") is the longest common string among the longest common substrings which belong to the set union of LCS("ACGGTA", "TCGT") and LCS("ACGGT", "TCGT").
+
+LCS(X_i, Y_j) =
+ε, if i = 0 or j = 0
+LCS(X_{i-1}, Y_{j-1})^x_i, if i > 0 and j > 0 and x_i = y_j
+LCS(max(X_{i-1}, Y_j)^x_i, LCS(X_{i-1}, Y_j)), if i > 0 and j > 0 and x_i != y_j
+
+Wiki excerpt:
+To find the LCS of }} and }}, compare }} and }}. If they are equal, then the sequence }(X_,Y_)}}(X_,Y_)} is extended by that element, }}. If they are not equal, then the longest among the two sequences, }(X_,Y_)}}(X_,Y_)}, and }(X_,Y_)}}(X_,Y_)}, is retained. (If they are the same length, but not identical, then both are retained.) The base case, when either }} or }} is empty, is the empty string, .
+
+TODO: Introduce and discuss the significance of ε.
+
+LCS("ABCDEFGH", "IBCDEFJH") = LCS("ABCDEFG", "IBCDEFJ") ^ "H
+LCS("ABCDEFG", "IBCDEFJ") is a maximal-length string in the set LCS("ABCDEFG", "IBCDEF") <set_union> LCS("ABCDEF", "IBCDEFJ")
+
+
+LCS("ε", c) = 0 for all symbols `c`
+LCS(c, "ε") = 0 for all symbols `c`
+
+LCS("ε", "ε") = 0
+LCS("εA", "ε" ^ S) = 0 for `S` in {"", "I", "IB", "IBC", "IBCD", "IBCDE", "IBCDEF", "IBCDEFJ", "IBCDEFJH"}
+LCS("ε" ^ S, "εI") = 0 for `S` in {"", "A", "AB", "ABC", "ABCD", "ABCDE", "ABCDEF", "ABCDEFG", "ABCDEFGH"}
+LCS("εAB", "εIB" ^ S) = 1 for `S` in {"", "C", "CD", "CDE", "CDEF", "CDEFJ", "CDEFJH"} because i, j-1 and i-1, j ...
+LCS("εAB" ^ S, "εIB") = 1 for `S` in {"", "C", "CD", "CDE", "CDEF", "CDEFG", "CDEFGH"} ...
+LCS("εABC", "εIBC" ^ S) = 2 for `S` in {"", "D", "DE", "DEF", "DEFJ", "DEFJH"} ...
+LCS("εABC" ^ S, "εIBC") = 2 for `S` in {"", "D", "DE", "DEF", "DEFG", "DEFGH"} ...
+...
+LCS("εABCDEFGH", "εIBCDEFJH") = 6
+
 ```
 
 Conceptually, we've already built the data structure which will allow us to recover any path or a sub-path, corresponding to a full or partial solution to our problem of identifying differences between two lists of elements.
 
 The conventional way to build the data structure is in a tabular form. We arbitrarily set the row headers to correspond to the elements of the source list and the column headers - to those of the target one.
 
-```
-## TODO:
-- Strip the table to show only partially built one, to demonstrate the steps.
-- Improve the narrative around table construction.
-```
+The complete table is as follows:
 |       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
@@ -234,20 +270,7 @@ The conventional way to build the data structure is in a tabular form. We arbitr
 |   G   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
 |   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   6   |
 
-As you can see, we conventionally take a note of the length of the longest common subsequence found as of a given iteration step. This isn't really fundamental to our difference-representation problem, but will come in handy at the stage when we'll need to heuristically decide which path to present as the ultimate solution. The other bit of information that we take a note of is somehow more relevant, namely the operation which we perform at a given iteration step, based on the equality between the current list elements `X`<sub>`i`</sub> and `Y`<sub>`j`</sub> as of that iteration step.
-
-The complete table is as follows.
-|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   A   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   B   |   0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
-|   C   |   0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
-|   D   |   0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
-|   E   |   0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
-|   F   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   G   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   6   |
+As you can see, we conventionally take a note of the length of the longest common subsequence found as of a given iteration step. This isn't really fundamental to our difference representation problem, but will come in handy at the stage when we'll need to heuristically decide which path to present as the ultimate solution. The other bit of information that we take a note of is somehow more relevant, namely the operation which we perform at a given iteration step, based on the equality between the current list elements `X`<sub>`i`</sub> and `Y`<sub>`j`</sub> as of that iteration step.
 
 Once we've built the table, it becomes obvious that all solutions correspond to movements along the table cells in one of three possible directions at a time: right, down or diagonally right-down. The complete paths - which are effectively possible solutions to the diff problem - correspond to moves from the top left cell to the bottom right cell.
 
@@ -263,7 +286,6 @@ The most intuitive path and solution discussed before is the following one:
 |   F   |   0   |   0   |   1   |   2   |   3   |   4   |  ↖5   |   5   |   5   |
 |   G   |   0   |   0   |   1   |   2   |   3   |   4   |  ↑5   |  ←5   |   5   |
 |   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |  ↖6   |
-
 
 Correspondingly, the least intuitive solution corresponds to this path:
 |       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |

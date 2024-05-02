@@ -1,5 +1,5 @@
 # TODO: Re-arrange functions for a better reading flow.
-# TODO: Explain that the tests aren't meant to be `roc format`table, for the purpose of intuitive readability of how the LCS table gets built.
+# TODO: Explain that the tests aren't meant to be `roc format`able, for the purpose of intuitive readability of how the LCS table gets built.
 
 interface Lcs
     exposes [diffFormat]
@@ -41,7 +41,7 @@ buildTable = \x, y ->
                 )
         )
 
-beginningMark = @Line { lineNumber: 0, content: "" }
+beginningMark = @Line { lineNumber: 0, content: "ε" }
 
 DiffParameters : { colorize ? Bool, maxMatchingSubsequenceLength ? U64 }
 
@@ -301,7 +301,9 @@ expect
 
 ## "All matching lines filtered out"
 expect
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    # NOTE: We need to re-define the beginning mark here, because Roc doesn't like nested records, as per its latest version,
+    # as of the time of writing.
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     before = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "A" }, target: expectedBeginningMark },
         { op: Deletion,  source: @Line { lineNumber: 2, content: "G" }, target: expectedBeginningMark },
@@ -325,7 +327,7 @@ expect
 
 ## "No matching lines filtered out"
 expect
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     before = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "A" }, target: expectedBeginningMark },
         { op: Deletion,  source: @Line { lineNumber: 2, content: "G" }, target: expectedBeginningMark },
@@ -342,7 +344,7 @@ expect
 
 ## "Some matching lines filtered out"
 expect
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     before = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "A" }, target: expectedBeginningMark },
         { op: Insertion, source: @Line { lineNumber: 2, content: "G" }, target: @Line { lineNumber: 1, content: "C" } },
@@ -391,6 +393,7 @@ expect
     actual == expected
 
 expect
+    # NOTE: We don't need to re-define the beginning mark here, because we're not using it as a record field value.
     x = [
         beginningMark,
         @Line { lineNumber: 1, content: "A" },
@@ -490,7 +493,7 @@ expect
         @Line { lineNumber: 4, content: "A" },
         @Line { lineNumber: 5, content: "T" },
     ]
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "G"}, target: expectedBeginningMark },
         { op: Match,     source: @Line { lineNumber: 2, content: "A"}, target: @Line { lineNumber: 1, content: "A" } },
@@ -536,7 +539,7 @@ expect
         @Line { lineNumber: 5, content: "A" },
         @Line { lineNumber: 6, content: "C" },
     ]
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "A"}, target: expectedBeginningMark },
         { op: Deletion,  source: @Line { lineNumber: 2, content: "G"}, target: expectedBeginningMark },
@@ -555,7 +558,7 @@ expect
 expect
     x = ["G", "A", "C"]
     y = ["A", "G", "C", "A", "T"]
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "G"}, target: expectedBeginningMark },
         { op: Match,     source: @Line { lineNumber: 2, content: "A"}, target: @Line { lineNumber: 1, content: "A" } },
@@ -570,7 +573,7 @@ expect
 expect
     x = ["A", "G", "C", "A", "G", "G", "A"]
     y = ["C", "G", "A", "G", "A", "C"]
-    expectedBeginningMark = @Line { lineNumber: 0, content: "" }
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
         { op: Deletion,  source: @Line { lineNumber: 1, content: "A"}, target: expectedBeginningMark },
         { op: Deletion,  source: @Line { lineNumber: 2, content: "G"}, target: expectedBeginningMark },
@@ -606,8 +609,9 @@ expect
         "    Stdout.line \"HelloWorld!\"",
         "",
     ]
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
-        { op: Deletion,  source: @Line { lineNumber: 1, content: "app \"hello\"" },              target: @Line { lineNumber: 0, content: "" } },
+        { op: Deletion,  source: @Line { lineNumber: 1, content: "app \"hello\"" },              target: expectedBeginningMark },
         { op: Insertion, source: @Line { lineNumber: 1, content: "app \"hello\"" },              target: @Line { lineNumber: 1, content: "app \"hello-world\"" } },
         { op: Match,     source: @Line { lineNumber: 2, content: "    packages { pf: \"https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br\" }" }, target: @Line { lineNumber: 2, content: "    packages { pf: \"https://github.com/roc-lang/basic-cli/releases/download/0.9.1/y_Ww7a2_ZGjp0ZTt9Y_pNdSqqMRdMLzHMKfdN8LWidk.tar.br\" }" } },
         { op: Match,     source: @Line { lineNumber: 3, content: "    imports [pf.Stdout]" },    target: @Line { lineNumber: 3, content: "    imports [pf.Stdout]" } },
@@ -624,8 +628,9 @@ expect
 expect
     x = ["A", "B", "C", "D", "E", "F", "G", "H"]
     y = ["I", "B", "C", "D", "E", "F", "J", "H"]
+    expectedBeginningMark = @Line { lineNumber: 0, content: "ε" }
     expected = [
-        { op: Deletion,  source: @Line { lineNumber: 1, content: "A" }, target: @Line { lineNumber: 0, content: "" } },
+        { op: Deletion,  source: @Line { lineNumber: 1, content: "A" }, target: expectedBeginningMark },
         { op: Insertion, source: @Line { lineNumber: 1, content: "A" }, target: @Line { lineNumber: 1, content: "I" } },
         { op: Match,     source: @Line { lineNumber: 2, content: "B" }, target: @Line { lineNumber: 2, content: "B" } },
         { op: Match,     source: @Line { lineNumber: 3, content: "C" }, target: @Line { lineNumber: 3, content: "C" } },
