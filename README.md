@@ -10,6 +10,27 @@ they introduce some fundamental concepts about pure functional languages
 that most programmers have never encountered.
 *SDXRoc* is a sequel to previous books in [JavaScript][sdxjs] and [Python][sdxpy].
 
+## Contributing
+
+1.  Fork this repository on GitHub so that you have a copy under your own account.
+
+2.  Clone your repository to your machine.
+
+3.  Make your changes in a branch in the repository on your machine
+    (or in `main` if you prefer).
+
+4.  Push that branch to your forked repository on GitHub.
+
+5.  Create a pull request from that branch of your repository on GitHub to the main repository.
+
+We suggest that you add this repository as a remote to your desktop:
+
+```
+$ git remote add upstream git@github.com:roc-lang/book-of-examples
+```
+
+so that you can `git pull upstream main` periodically to stay up to date with changes.
+
 ## Topics
 
 | Name               | GitHub ID          | Topic                     | Slug       |
