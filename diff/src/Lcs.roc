@@ -16,7 +16,7 @@ Table : Dict (U64, U64) U64
 
 beginningMark = @Line { lineNumber: 0, content: "ε" }
 
-DiffParameters : { colorize ? Bool, maxMatchingSubsequenceLength ? U64 }
+DiffParameters : { colorize ? Bool, contextSize ? U64 }
 
 # TODO: Docstring.
 diffFormat : DiffParameters, List Str, List Str -> List Str
@@ -30,8 +30,8 @@ formatDiff = \params, input ->
 
 # TODO: Docstring.
 formatDiffHelp : DiffParameters, Diff -> List Str
-formatDiffHelp = \{ colorize ? Bool.false, maxMatchingSubsequenceLength ? 3 }, diffResult ->
-    filterDiff diffResult maxMatchingSubsequenceLength
+formatDiffHelp = \{ colorize ? Bool.false, contextSize ? 3 }, diffResult ->
+    filterDiff diffResult contextSize
     |> List.map \elem ->
         (_, source) = unpackLine elem.source
         (_, target) = unpackLine elem.target
@@ -74,8 +74,8 @@ Range : (U64, U64)
 
 # TODO: Docstring.
 filterDiff : Diff, U64 -> Diff
-filterDiff = \diffResult, maxMatchingSubsequenceLength ->
-    ranges = filterDiffHelp diffResult maxMatchingSubsequenceLength
+filterDiff = \diffResult, contextSize ->
+    ranges = filterDiffHelp diffResult contextSize
     List.walk ranges [] \updated, (first, last) ->
         List.concat updated (slice diffResult first last)
 
@@ -91,7 +91,7 @@ filterDiff = \diffResult, maxMatchingSubsequenceLength ->
 #   - Curr is not Match and prev was Match
 #   - Curr is Match and idx indicates we're at the last diff line/element
 filterDiffHelp : Diff, U64 -> List Range
-filterDiffHelp = \diffResult, maxMatchingSubsequenceLength ->
+filterDiffHelp = \diffResult, contextSize ->
     when List.len diffResult is
         0 -> []
         n ->
@@ -129,7 +129,7 @@ filterDiffHelp = \diffResult, maxMatchingSubsequenceLength ->
                                         Match ->
                                             if idx == lastDiffEntryIdx then
                                                 (
-                                                    List.concat ranges (maybeTrimRange (latestSeqStart, idx) idx maxMatchingSubsequenceLength),
+                                                    List.concat ranges (maybeTrimRange (latestSeqStart, idx) idx contextSize),
                                                     latestSeqStart,
                                                 )
                                             else
@@ -140,7 +140,7 @@ filterDiffHelp = \diffResult, maxMatchingSubsequenceLength ->
 
                                         _ ->
                                             prevRange = (latestSeqStart, idx - 1)
-                                            matchingRange = maybeTrimRange prevRange idx maxMatchingSubsequenceLength
+                                            matchingRange = maybeTrimRange prevRange idx contextSize
                                             rangesUpdated = List.concat ranges matchingRange
 
                                             if idx == lastDiffEntryIdx then
@@ -161,7 +161,7 @@ filterDiffHelp = \diffResult, maxMatchingSubsequenceLength ->
                                             rangesUpdated = List.append ranges prevRange
                                             if idx == lastDiffEntryIdx then
                                                 (
-                                                    List.concat rangesUpdated (maybeTrimRange (idx, idx) idx maxMatchingSubsequenceLength),
+                                                    List.concat rangesUpdated (maybeTrimRange (idx, idx) idx contextSize),
                                                     idx,
                                                 )
                                             else

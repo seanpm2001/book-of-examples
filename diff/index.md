@@ -453,8 +453,6 @@ toLines = \list ->
         }
 ```
 
-Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding files this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` includes in its output.
-
 We define a `Diff` to be a list of `DiffLines`, with each of the latter being a record consisting of a `DiffOp` and the source and target `Line`s, with respect to which the diff op is applied. These definitions also enable us to generalize our `diffHelp` function to `Line`s instead of just `Str`s:
 ```roc
 diff : List Str, List Str -> Diff
@@ -497,6 +495,211 @@ formatDiff = \diffResult ->
 unpackLine : Line -> (U64, Str)
 unpackLine = \@Line { lineNumber, content } -> (lineNumber, content)
 ```
+
+Going back to the primary direction of this section, we observe that the `toLines` function enables us to annotate an entire file with the corresponding line numbers as metadata. The purpose of the latter will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding files this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` includes in its output.
+
+```bash
+$ man diff
+DIFF(1)
+
+NAME
+       diff - compare files line by line
+
+SYNOPSIS
+       diff [OPTION]... FILES
+
+DESCRIPTION
+       Compare FILES line by line.
+...
+       -u, -U NUM, --unified[=NUM]
+              output NUM (default 3) lines of unified context
+```
+
+A quick reference to the `man` page of GNU `diff` indicates that the unified format comes with an optional argument which denotes the size of the associated context, in terms of number of lines. This is a perfectly reasonable functionality to include into our tool as well. Let's define a record with optional fields to allow as to format our diff accordingly.
+
+```roc
+DiffParameters : { colorize ? Bool, contextSize ? U64 }
+```
+
+Now, we are ready pass this as the first argument of our `diffFormat` and `formatDiff` functions. For convenience, we'll refactor the latter into a primary function and its auxiliary counterpart, `formatDiffHelp`:
+```roc
+diffFormat : DiffParameters, List Str, List Str -> List Str
+diffFormat = \params, x, y ->
+    formatDiff params (diff x y)
+
+formatDiff : DiffParameters, Diff -> List Str
+formatDiff = \params, input ->
+    formatDiffHelp params input
+
+formatDiffHelp : DiffParameters, Diff -> List Str
+formatDiffHelp = \{ colorize ? Bool.false, contextSize ? 3 }, diffResult ->
+    List.map diffResult \elem ->
+        (_, source) = unpackLine elem.source
+        (_, target) = unpackLine elem.target
+
+        when elem.op is
+            Match ->
+                "  $(source)"
+
+            Insertion ->
+                diffLine = "+ $(target)"
+                if colorize then
+                    colorizeText GreenFg diffLine
+                else
+                    diffLine
+
+            Deletion ->
+                diffLine = "- $(source)"
+                if colorize then
+                    colorizeText RedFg diffLine
+                else
+                    diffLine
+```
+
+We weave our parameters record through the chain of calls, which are responsible for formatting the diff, and utilize the parameter values as needed. We've made use of the `colorize` parameter and, thus, enable the user to opt in to a colorized diff representation. We can now proceed to filtering only the lines which correspond to insertion and deletion operations, and all lines up to `contextSize` on either side. This means that we're going to only show as many as `2 * contextSize` matching lines, between any two non-empty, contiguous segments, consisting of zero or more insertion operations, and zero or more deletion ones.
+
+```roc
+filterDiff : Diff, U64 -> Diff
+filterDiff = \diffResult, contextSize ->
+    ranges = filterDiffHelp diffResult contextSize
+    List.walk ranges [] \updated, (first, last) ->
+        List.concat updated (slice diffResult first last)
+
+filterDiffHelp : Diff, U64 -> List Range
+filterDiffHelp = \diffResult, contextSize ->
+    when List.len diffResult is
+        0 -> []
+        n ->
+            allMatching = List.all diffResult \elem -> elem.op == Match
+            if allMatching then
+                []
+            else
+                lastDiffEntryIdx = n - 1
+                (subseqRanges, _) = List.walkWithIndex diffResult ([], 0) \(ranges, latestSeqStart), elem, idx ->
+                    prev : Result DiffOp [NoDiffOpBeforeSeqStart]
+                    prev =
+                        when idx is
+                            0 -> Err NoDiffOpBeforeSeqStart
+                            _ ->
+                                when List.get diffResult (idx - 1) is
+                                    Err OutOfBounds -> crash "Error: Unexpected out-of-bounds access in diff list"
+                                    Ok prevDiffLine -> Ok prevDiffLine.op
+
+                    when idx is
+                        0 ->
+                            when prev is
+                                Err NoDiffOpBeforeSeqStart ->
+                                    (
+                                        ranges,
+                                        idx,
+                                    )
+
+                                _ ->
+                                    crash "TODO: Prev cannot be a match/insertion/deletion if curr idx is 0"
+
+                        _ ->
+                            when prev is
+                                Ok Match ->
+                                    when elem.op is
+                                        Match ->
+                                            if idx == lastDiffEntryIdx then
+                                                (
+                                                    List.concat ranges (maybeTrimRange (latestSeqStart, idx) idx contextSize),
+                                                    latestSeqStart,
+                                                )
+                                            else
+                                                (
+                                                    ranges,
+                                                    latestSeqStart,
+                                                )
+
+                                        _ ->
+                                            prevRange = (latestSeqStart, idx - 1)
+                                            matchingRange = maybeTrimRange prevRange idx contextSize
+                                            rangesUpdated = List.concat ranges matchingRange
+
+                                            if idx == lastDiffEntryIdx then
+                                                (
+                                                    List.append rangesUpdated (idx, idx),
+                                                    idx,
+                                                )
+                                            else
+                                                (
+                                                    rangesUpdated,
+                                                    idx,
+                                                )
+
+                                Ok Insertion | Ok Deletion ->
+                                    when elem.op is
+                                        Match ->
+                                            prevRange = (latestSeqStart, idx - 1)
+                                            rangesUpdated = List.append ranges prevRange
+                                            if idx == lastDiffEntryIdx then
+                                                (
+                                                    List.concat rangesUpdated (maybeTrimRange (idx, idx) idx contextSize),
+                                                    idx,
+                                                )
+                                            else
+                                                (
+                                                    rangesUpdated,
+                                                    idx,
+                                                )
+
+                                        _ ->
+                                            if idx == lastDiffEntryIdx then
+                                                (
+                                                    List.append ranges (latestSeqStart, idx),
+                                                    idx,
+                                                )
+                                            else
+                                                (
+                                                    ranges,
+                                                    latestSeqStart,
+                                                )
+
+                                Err NoDiffOpBeforeSeqStart ->
+                                    crash "TODO: Prev must be a match/insertion/deletion if curr idx is greater than 0"
+
+                subseqRanges
+```
+
+We employ two auxiliary functoins in `filterDiffHelp`, and they're defined as follows:
+```roc
+slice : List elem, U64, U64 -> List elem
+slice = \list, fromInclusive, untilInclusive ->
+    List.sublist list { start: fromInclusive, len: 1 + untilInclusive - fromInclusive }
+
+maybeTrimRange : Range, U64, U64 -> List Range
+maybeTrimRange = \(first, last), lastIdx, maxLength ->
+    if first == 0 then
+        if last == lastIdx then
+            crash "TODO: Unexpected state, this should already have been returned as the sole range beforehand"
+        else if last >= maxLength then
+            [(1 + last - maxLength, last)]
+        else
+            [(first, last)]
+    else if last == lastIdx then
+        if last - maxLength + 1 <= first then
+            [(first, last)]
+        else
+            [(first, first + maxLength - 1)]
+    else if last - first + 1 <= 2 * maxLength then
+        [(first, last)]
+    else
+        [(first, first + maxLength - 1), (1 + last - maxLength, last)]
+```
+
+We proceed with utilizing the newly-implemented context-filtering functionality:
+```roc
+formatDiffHelp = \{ colorize ? Bool.false, contextSize ? 3 }, diffResult ->
+    filterDiff diffResult contextSize
+    |> List.map \elem ->
+...
+```
+
+The resulting implementation is almost equivalent to GNU `diff`'s unified format, with the only difference that the absolute line numbers and diff block sizes aren't displayed. The latter are actually referred to as _hunks_.
+
+Let's actually get to completing the implementation of our unified format output in the following section.
 
 ## Section N.5: Unified Format
 ```
