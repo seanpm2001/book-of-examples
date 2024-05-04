@@ -117,7 +117,7 @@ In this section, we'll get acquainted with a data structure which will enable us
 
 This automatically means that we wouldn't want to be considering matching blocks of lines from the two files as differences (as it was unfortunately the case with the hypothetical `uglierdiff` tool). This is where an important observation lies - one key ingredient we need is a method for identifying the longest possible stretches of matching sequences between the given files. The other key ingredient is that, if we're to view a diff between two files as a means for transforming one file into another one (even though this may not be be the actual desired outcome at all, you'll see that this is a very useful conceptual representation), then the first one could be viewed as a "source", and the second one - as a "target". Correspondingly, the chain of operations transforming our source into the target will be the ultimate diff output. Therefore, in addition to identifying long stretches of matching lines between the two files, we'll also be interested in thinking in terms of removals of lines from the source file and preservations (or insertions, with respect to the former) of lines that are already present in the target file, but not in the former. Naturally, we won't be performing any modifications to stretches of matching elements between the two sequences. Those are the parts of our output which we would ideally like to keep out of focus as much as possible. They could be useful to provide context, but they shouldn't be at the center of attention.
 
-This particular representation is also referred to as _unified format_, in the context of the GNU `diff` tool, and that was the relevance of the `-u` command-line argument  in the opening paragraph (alternatively accessible via the `--unified` flag). Some alternative representations, which we won't be discussing in this chapter are the _normal format_ (`--normal`) and _context format_ (`-c` or `--context`). They're closely related and are possible to be derived - with relatively minor modifications - using the approaches which we'll get acquianted with in this chapter. Naturally, for further details and even more possible representations, you're welcome to refer to GNU `diff`'s `man` pages.
+This particular representation is also referred to as _unified format_, in the context of the GNU `diff` tool, and that was the relevance of the `-u` command-line argument  in the opening paragraph (alternatively accessible via the `--unified` flag). Some alternative representations, which we won't be discussing in this chapter are the _normal format_ (`--normal`) and _context format_ (`-c` or `--context`). They're closely related and are possible to be derived - with relatively minor modifications - using the approaches which we'll get acquainted with in this chapter. Naturally, for further details and even more possible representations, you're welcome to refer to GNU `diff`'s `man` pages.
 
 Let's step back a bit and try to think in what domains we'd expect the kind of algorithms that we need in this case to originate. Given two or more sequences of comparable-for-equality items, it is of interest to identify the longest possible stretches of items which are equal between the sequences under consideration.
 
@@ -342,7 +342,7 @@ Our `buildTable` function takes two arbitrary lists of the same type - which its
 ```
 
 ```roc
-beginningMark = ""
+beginningMark = "ε"
 
 diff : List Str, List Str -> List Str
 diff = \x, y ->
@@ -386,19 +386,17 @@ diffHelp = \lcs, x, y, i, j ->
 
 ## Section N.3: Colorized Output
 
-```
-## TODO: Taking it up a notch further.
-Colourizing the output, but also discussing how this isn't by any means a general enough solution, that it wouldn't honour terminal emulator themes etc.
-It just forces lines corresponding to certain operations to be coloured with particular colours, regardless of any external context.
-```
+Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations, that constitute the diff are. It is important to note that the GNU `diff` tool doesn't provide color-coding per se, but it instead formats the output in a standardized way, so that this representation could optionally undergo subsequent syntax highlighting via other tools, editors and IDEs, as applicable.
 
-Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations, that constitute the diff are. It is important to note that the standard, GNU `diff` tool doesn't provide color-coding per se, but it instead formats the output in a standardized way, so that this representation could optionally undergo subsequent syntax highlighting via other tools, editors and IDEs, as applicable.
+In this section we'll briefly introduce some rudimentary color-coding to our diff output, and in subsequent sections we'll generalize our post-processing logic, which will enable us to perform the color-coding in a bit more elegant manner, as well as perform other post-processing steps, with the intention of increasing the degree of interpretability of the output.
 
-In this section we'll briefly introduce some rudimentary color-coding to our diff output, and in subsequent sections we'll generalize our diff post-processing logic, which will enable us to perform the color-coding in a bit more elegant manner as well as do other post-processing steps, with the intention of increasing the degree of interpretability of the output.
+We'll follow `git`'s diff representation, namely colorizing lines corresponding to insertions in green, and those corresponding to deletions - in red. Please, note that this doesn't take any special consideration of terminal emulator themes, nor any other external context.
 
-```
-TODO: Explanation of terminal colours and a link to Wikipedia.
-```
+Practically speaking, terminal output colorization is achieved via what are referred to as ANSI escape codes. We prepend a sequence of characters before the line to denote that we want a foreground color to be applied to all characters on that line. In order to preserve the formatting on lines where the same diff operation doesn't apply, we append an escape code for resetting the formatting at the end of each colorized line, namely `"\u(001b)[0m"`. Correspondingly, the escape codes for green and red foreground color are `"\u(001b)[6;33;32m"` and `"\u(001b)[6;33;31m"`.
+
+For further details, please, refer to the "Colors" section of Wikipedia's "ANSI escape code" page[^1]. Now let's implement a simple text colorization function.
+
+[^1]: https://en.wikipedia.org/wiki/ANSI_escape_code#Colors.
 
 ```roc
 green = "\u(001b)[6;33;32m"
@@ -413,7 +411,7 @@ colorizeText = \color, input ->
         RedFg -> "$(red)$(input)$(resetFormatting)"
 ```
 
-And just like this, we're able to arbitrarily apply colors to text. Now, we can actually color-code our diff operations - insertion in green and deletion in red.
+And just like this, we're able to arbitrarily apply colors to text. Now, we can actually color-code our diff operations - insertion in green and deletion in red. Please, note that the color choices are arbitrary in this case. It would be equally seamless to colorize the background of each line, i.e., achieve some sort of highlighting, via employing `"\u(001b)[6;33;42m"` and `"\u(001b)[6;33;41m"` for green and red, correspondingly. This is because background colors span over the 40 to 48 escape-code range.
 
 ```roc
     else if j > 0 && (i == 0 || left >= up) then
@@ -422,11 +420,7 @@ And just like this, we're able to arbitrarily apply colors to text. Now, we can 
         List.append (diffHelp lcs x y (i - 1) j) (colorizeText RedFg "- $(xi)")
 ```
 
-```
-## TODO:
-- Explanation.
-- Narrative connection to the following section.
-```
+Putting our `colorizeText` function to use, now we're able to associate our colorization preferences to the insertion and deletion operations.
 
 ## Section N.4: Diff Context
 ```
@@ -477,7 +471,7 @@ TODO:
 ```
 
 In order to be able to employ our diff functionality in the real world, we'll need to promote it to an executable, which we'll then run against arbitrary input files.
-Let's create a file called `main.roc` and import the exposed `diffFormat` function, which will do all associated heavylifting.
+Let's create a file called `main.roc` and import the exposed `diffFormat` function, which will do all associated heavy-lifting.
 
 ```roc
 app "diff"
@@ -496,7 +490,7 @@ app "diff"
     provides [main] to cli
 ```
 
-We'll be basing our diff tool on top of the `basic-cli` platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we're importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arugments and perform file reading operations.
+We'll be basing our diff tool on top of the `basic-cli` platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we're importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arguments and perform file reading operations.
 
 ```
 $ roc build main.roc --output rocdiff
@@ -542,7 +536,7 @@ git config diff.tool rocdiff
 git config difftool.rocdiff.cmd "<full_path_to_rocdiff_dir>/rocdiff \$LOCAL \$REMOTE"
 ```
 
-Adding the `--global` fiag applies these changes globally, and the configured `difftool` could be utilized in any `git` repository on the same host.
+Adding the `--global` flag applies these changes globally, and the configured `difftool` could be utilized in any `git` repository on the same host.
 
 ```bash
 $ git difftool
@@ -564,4 +558,5 @@ TODO: Summary.
 ```
 TODO:
 - Extending the tool to output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format.
+- Extending the tool to output colors, associated with diff operations, in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
 ```
