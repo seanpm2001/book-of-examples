@@ -3,11 +3,11 @@
 
 # Chapter N: A Diff Tool
 
-```
-TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
-```
+| <span style="font-weight:normal"><ul><li>The difference between two sequences can be represented as a conversion of a source sequence to a target sequence, via applying a series of insertion, deletion and matching operations, in an element-wise manner.</li><li>Being able to represent the differences between two files is a fundamental feature of version-control systems, whereby it serves to display a commit, the difference between two commits and assist in branch merging operations.</li><li>Context is important when representing differences, and different formats may choose to achieve this via take advantage of context in different ways.</ul></span> |
+|----------------------------------------------|
 
-Terms defined: ability, diff, dynamic programming, longest common subsequence, memoization, merge, opaque type, platform, version-control system
+| <span style="font-weight:normal">Terms defined: [**Ability**](#), [**diff**](#), [**dynamic programming**](#), [**longest common subsequence**](#), [**memoization**](#), [**merge**](#), [**opaque type**](#), [**platform**](#), [**version-control system**](#)</span> |
+|----------------------------------------------|
 
 1. [Representation](#section-n1-representation)
 2. [Longest Common Subsequence (LCS)](#section-n2-longest-common-subsequence-lcs)
@@ -451,7 +451,7 @@ toLines = \list ->
 
 Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding files this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` includes in its output.
 
-We define a `Diff` to be a list of `DiffLines`, with each of the latter being a record consisting of a `DiffOp` and the source and target `Line`s, with respect to which the diff op is applied. These definitions also enalbe us to generalize our `diffHelp` function to `Line`s instead of just `Str`s:
+We define a `Diff` to be a list of `DiffLines`, with each of the latter being a record consisting of a `DiffOp` and the source and target `Line`s, with respect to which the diff op is applied. These definitions also enable us to generalize our `diffHelp` function to `Line`s instead of just `Str`s:
 ```roc
 diff : List Str, List Str -> Diff
 ...
@@ -577,7 +577,7 @@ TODO: Summary.
 
 ### Color Themes
 
-Output colorized line, associated with diff operations, in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
+Produce colorized output in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
 
 ### Diff Formats
-Output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format. Just as the behaviour of the GNU `diff` tool, the desired one could be specified as a command-line argument.
+Output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format. Just as the behaviour of the GNU `diff` tool, the desired one could be specified as an optional command-line argument, assuming a default value otherwise.
