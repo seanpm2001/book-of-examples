@@ -1,45 +1,18 @@
-# TODO: Re-arrange functions for a better reading flow.
-# TODO: Explain that the tests aren't meant to be `roc format`able, for the purpose of intuitive readability of how the LCS table gets built.
-
 interface Lcs
     exposes [diffFormat]
     imports []
 
 Line := { lineNumber : U64, content : Str } implements [Eq { isEq: areLinesEqual }]
-DiffOp : [Insertion, Deletion, Match]
-DiffLine : { op : DiffOp, source : Line, target : Line }
-Diff : List DiffLine
-Table : Dict (U64, U64) U64
 
 # TODO: Docstring.
 areLinesEqual : Line, Line -> Bool
 areLinesEqual = \@Line { content: x }, @Line { content: y } -> x == y
 
-# TODO: Docstring.
-buildTable : List a, List a -> Table where a implements Eq
-buildTable = \x, y ->
-    List.walkWithIndex
-        x
-        (Dict.empty {})
-        (\tableX, xi, i ->
-            List.walkWithIndex
-                y
-                tableX
-                (\tableY, yj, j ->
-                    curr =
-                        if i == 0 || j == 0 then
-                            0
-                        else if xi == yj then
-                            prevMatch = Dict.get tableY (i - 1, j - 1) |> Result.withDefault 0
-                            prevMatch + 1
-                        else
-                            prevInsert = Dict.get tableY (i, j - 1) |> Result.withDefault 0
-                            prevDelete = Dict.get tableY (i - 1, j) |> Result.withDefault 0
-                            Num.max prevInsert prevDelete
+DiffOp : [Insertion, Deletion, Match]
+DiffLine : { op : DiffOp, source : Line, target : Line }
+Diff : List DiffLine
 
-                    Dict.insert tableY (i, j) curr
-                )
-        )
+Table : Dict (U64, U64) U64
 
 beginningMark = @Line { lineNumber: 0, content: "ε" }
 
@@ -51,71 +24,9 @@ diffFormat = \params, x, y ->
     formatDiff params (diff x y)
 
 # TODO: Docstring.
-# Please, note that we're passing the original length, as that is what we need for our iterations, in terms of starting indices.
-diff : List Str, List Str -> Diff
-diff = \x, y ->
-    xPrim = List.prepend (toLines x) beginningMark
-    yPrim = List.prepend (toLines y) beginningMark
-    diffHelp (buildTable xPrim yPrim) xPrim yPrim (List.len x) (List.len y)
-
-# TODO: Docstring.
 formatDiff : DiffParameters, Diff -> List Str
 formatDiff = \params, input ->
     formatDiffHelp params input
-
-# TODO: Docstring.
-toLines : List Str -> List Line
-toLines = \list ->
-    List.mapWithIndex list \elem, idx -> @Line {
-            lineNumber: idx + 1,
-            content: elem,
-        }
-
-# TODO: Docstring.
-diffHelp : Table, List Line, List Line, U64, U64 -> Diff
-diffHelp = \lcs, x, y, i, j ->
-    (xi, up) =
-        if i > 0 then
-            (
-                (List.get x i |> Result.withDefault beginningMark),
-                (Dict.get lcs (i - 1, j) |> Result.withDefault 0),
-            )
-        else
-            (beginningMark, 0)
-
-    (yj, left) =
-        if j > 0 then
-            (
-                (List.get y j |> Result.withDefault beginningMark),
-                (Dict.get lcs (i, j - 1) |> Result.withDefault 0),
-            )
-        else
-            (beginningMark, 0)
-
-    if i > 0 && j > 0 && xi == yj then
-        List.append (diffHelp lcs x y (i - 1) (j - 1)) { op: Match, source: xi, target: yj }
-    else if j > 0 && (i == 0 || left >= up) then
-        List.append (diffHelp lcs x y i (j - 1)) { op: Insertion, source: xi, target: yj }
-    else if i > 0 && (j == 0 || left < up) then
-        List.append (diffHelp lcs x y (i - 1) j) { op: Deletion, source: xi, target: yj }
-    else
-        []
-
-# TODO: Docstring.
-unpackLine : Line -> (U64, Str)
-unpackLine = \@Line { lineNumber, content } -> (lineNumber, content)
-
-green = "\u(001b)[6;33;32m"
-red = "\u(001b)[6;33;31m"
-resetFormatting = "\u(001b)[0m"
-
-# TODO: Docstring.
-Color : [GreenFg, RedFg]
-colorizeText : Color, Str -> Str
-colorizeText = \color, input ->
-    when color is
-        GreenFg -> "$(green)$(input)$(resetFormatting)"
-        RedFg -> "$(red)$(input)$(resetFormatting)"
 
 # TODO: Docstring.
 formatDiffHelp : DiffParameters, Diff -> List Str
@@ -144,9 +55,20 @@ formatDiffHelp = \{ colorize ? Bool.false, maxMatchingSubsequenceLength ? 3 }, d
                     diffLine
 
 # TODO: Docstring.
-slice : List elem, U64, U64 -> List elem
-slice = \list, fromInclusive, untilInclusive ->
-    List.sublist list { start: fromInclusive, len: 1 + untilInclusive - fromInclusive }
+unpackLine : Line -> (U64, Str)
+unpackLine = \@Line { lineNumber, content } -> (lineNumber, content)
+
+green = "\u(001b)[6;33;32m"
+red = "\u(001b)[6;33;31m"
+resetFormatting = "\u(001b)[0m"
+
+# TODO: Docstring.
+Color : [GreenFg, RedFg]
+colorizeText : Color, Str -> Str
+colorizeText = \color, input ->
+    when color is
+        GreenFg -> "$(green)$(input)$(resetFormatting)"
+        RedFg -> "$(red)$(input)$(resetFormatting)"
 
 Range : (U64, U64)
 
@@ -266,6 +188,11 @@ filterDiffHelp = \diffResult, maxMatchingSubsequenceLength ->
                 subseqRanges
 
 # TODO: Docstring.
+slice : List elem, U64, U64 -> List elem
+slice = \list, fromInclusive, untilInclusive ->
+    List.sublist list { start: fromInclusive, len: 1 + untilInclusive - fromInclusive }
+
+# TODO: Docstring.
 maybeTrimRange : Range, U64, U64 -> List Range
 maybeTrimRange = \(first, last), lastIdx, maxLength ->
     if first == 0 then
@@ -285,6 +212,79 @@ maybeTrimRange = \(first, last), lastIdx, maxLength ->
     else
         [(first, first + maxLength - 1), (1 + last - maxLength, last)]
 
+# TODO: Docstring.
+# Please, note that we're passing the original length, as that is what we need for our iterations, in terms of starting indices.
+diff : List Str, List Str -> Diff
+diff = \x, y ->
+    xPrim = List.prepend (toLines x) beginningMark
+    yPrim = List.prepend (toLines y) beginningMark
+    diffHelp (buildTable xPrim yPrim) xPrim yPrim (List.len x) (List.len y)
+
+# TODO: Docstring.
+diffHelp : Table, List Line, List Line, U64, U64 -> Diff
+diffHelp = \lcs, x, y, i, j ->
+    (xi, up) =
+        if i > 0 then
+            (
+                (List.get x i |> Result.withDefault beginningMark),
+                (Dict.get lcs (i - 1, j) |> Result.withDefault 0),
+            )
+        else
+            (beginningMark, 0)
+
+    (yj, left) =
+        if j > 0 then
+            (
+                (List.get y j |> Result.withDefault beginningMark),
+                (Dict.get lcs (i, j - 1) |> Result.withDefault 0),
+            )
+        else
+            (beginningMark, 0)
+
+    if i > 0 && j > 0 && xi == yj then
+        List.append (diffHelp lcs x y (i - 1) (j - 1)) { op: Match, source: xi, target: yj }
+    else if j > 0 && (i == 0 || left >= up) then
+        List.append (diffHelp lcs x y i (j - 1)) { op: Insertion, source: xi, target: yj }
+    else if i > 0 && (j == 0 || left < up) then
+        List.append (diffHelp lcs x y (i - 1) j) { op: Deletion, source: xi, target: yj }
+    else
+        []
+
+# TODO: Docstring.
+toLines : List Str -> List Line
+toLines = \list ->
+    List.mapWithIndex list \elem, idx -> @Line {
+            lineNumber: idx + 1,
+            content: elem,
+        }
+
+# TODO: Docstring.
+buildTable : List a, List a -> Table where a implements Eq
+buildTable = \x, y ->
+    List.walkWithIndex
+        x
+        (Dict.empty {})
+        (\tableX, xi, i ->
+            List.walkWithIndex
+                y
+                tableX
+                (\tableY, yj, j ->
+                    curr =
+                        if i == 0 || j == 0 then
+                            0
+                        else if xi == yj then
+                            prevMatch = Dict.get tableY (i - 1, j - 1) |> Result.withDefault 0
+                            prevMatch + 1
+                        else
+                            prevInsert = Dict.get tableY (i, j - 1) |> Result.withDefault 0
+                            prevDelete = Dict.get tableY (i - 1, j) |> Result.withDefault 0
+                            Num.max prevInsert prevDelete
+
+                    Dict.insert tableY (i, j) curr
+                )
+        )
+
+# TODO: Articulate properly in a comment that the tests aren't meant to be `roc format`able, for the purpose of intuitive readability (in terms of text alignment) of how the LCS table gets built.
 ## "All matches, expecting to return a blank diff"
 expect
     before = [
