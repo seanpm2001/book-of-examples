@@ -7,7 +7,7 @@
 TODO: Abstract in a bullet-point form, i.e., a few bullet points summarizing what the chapter is going to be about
 ```
 
-Terms defined: ability, diff, dynamic programming, longest common subsequence, memoization, merge, platform, version-control system
+Terms defined: ability, diff, dynamic programming, longest common subsequence, memoization, merge, opaque type, platform, version-control system
 
 1. [Representation](#section-n1-representation)
 2. [Longest Common Subsequence (LCS)](#section-n2-longest-common-subsequence-lcs)
@@ -420,18 +420,15 @@ And just like this, we're able to arbitrarily apply colors to text. Now, we can 
         List.append (diffHelp lcs x y (i - 1) j) (colorizeText RedFg "- $(xi)")
 ```
 
-Putting our `colorizeText` function to use, now we're able to associate our colorization preferences to the insertion and deletion operations.
+Putting our `colorizeText` function to use in our `diffHelp` function, we're now able to associate our colorization preferences to the insertion and deletion operations.
 
 ## Section N.4: Diff Context
-```
-## TODO: Intro to the section and a suitable transition from the previous one.
-```
 
-This serves the job as advertized, but if we consider real-world examples for file changes, it is not at all unlikely that a change in a file may involve a handful of lines, whilst the total file size in terms of number of lines may be in the hundreds or thousands.
+So far, our diff output serves the job as advertized. However, if we consider real-world examples for file changes, it is not at all unlikely that a change in a file may involve a handful of lines, whilst the total file size in terms of number of lines may be in the hundreds or even thousands.
 
-This is actually a tricky class of cases that our tool, at the current stage of its development, is likely to not be able to handle well at all. We might have to manually scroll through the output or filter by diff marks, in order to identify where _exactly_ the differences are. This suggests that most of the context in such cases isn't really useful, if we're going to filtering it out eventually. What could we do to improve our tool, with respect to this? We might want to introduce the notion of context, in terms of line adjacency, and only display up to a certain number of lines away from each contiguous set of lines, associated with diff marks. This is essentially how the GNU `diff` tool works as well, in some of its modes.
+This is actually a tricky class of cases that our tool, at the current stage of its development, is likely to not be able to handle well at all. We might have to manually scroll through the output or filter by diff marks, in order to identify where _exactly_ the differences are. This suggests that most of the context in such cases isn't really useful, if we would be filtering it out eventually. What could we do to improve our tool, with respect to this? We might want to introduce the notion of context, in terms of line adjacency, and only display up to a certain number of lines away from each contiguous set of lines associated with diff marks. This is essentially how the GNU `diff` tool works as well, in some of its modes.
 
-First, let's adapt our implementation, so that it can carry some metadata alongside the actual content that's being compared. Most naturally, the associated number with a given line in a file constitutes a handy bit of metadata that we wouldn't mind having around.
+First, let's adapt our implementation, so that it can carry some metadata alongside the actual content that's being compared. Naturally, the associated number with a given line in a file constitutes a handy bit of metadata that we wouldn't mind having around.
 
 ```roc
 Line := { lineNumber : U64, content : Str } implements [Eq { isEq: areLinesEqual }]
@@ -442,7 +439,7 @@ Diff : List DiffLine
 areLinesEqual : Line, Line -> Bool
 areLinesEqual = \@Line { content: x }, @Line { content: y } -> x == y
 
-beginningMark = @Line { lineNumber: 0, content: "" }
+beginningMark = @Line { lineNumber: 0, content: "ε" }
 
 toLines : List Str -> List Line
 toLines = \list ->
@@ -452,11 +449,34 @@ toLines = \list ->
         }
 ```
 
+Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding files this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` includes in its output.
+
+We define a `Diff` to be a list of `DiffLines`, with each of the latter being a record consisting of a `DiffOp` and the source and target `Line`s, with respect to which the diff op is applied. These definitions also enalbe us to generalize our `diffHelp` function to `Line`s instead of just `Str`s:
 ```roc
+diff : List Str, List Str -> Diff
+...
 diffHelp : Table, List Line, List Line, U64, U64 -> Diff
+...
+    if i > 0 && j > 0 && xi == yj then
+        List.append (diffHelp lcs x y (i - 1) (j - 1)) { op: Match, source: xi, target: yj }
+    else if j > 0 && (i == 0 || left >= up) then
+        List.append (diffHelp lcs x y i (j - 1)) { op: Insertion, source: xi, target: yj }
+    else if i > 0 && (j == 0 || left < up) then
+        List.append (diffHelp lcs x y (i - 1) j) { op: Deletion, source: xi, target: yj }
+
 ```
 
-Now, thanks to `toLines`, we've got a means for annotating an entire file with the corresponding line numbers, as metadata. Their purpose will be two-fold - enabling us to maintain a sufficient context size, ideally parametrizable; and also serving as an indicator of where in the corresponding file this context occurs. As you saw in the intro section, it is precisely this type of context which `diff -u` also includes in its output.
+Since our `diff` method is a bit more abstract in that it returns a `Diff`, we need a means for actually converting the latter to a list of strings which could then be readily output as necessary.
+
+```roc
+diffFormat : List Str, List Str -> List Str
+diffFormat = \x, y ->
+    diff x y |> formatDiff
+
+formatDiff : Diff -> List Str
+```
+
+Thus, we defer text colorizing to the `formatDiff` function where, based on the value of `DiffOp`, colors are applied to the `content` value of a `Line`. Further, `diffFormat` becomes our core function - it takes two list of strings as input and returns another list of strings, corresponding to the diff of the former.
 
 ## Section N.5: Unified Format
 ```
@@ -555,8 +575,9 @@ TODO: Summary.
 
 ## Section N.8: Exercises
 
-```
-TODO:
-- Extending the tool to output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format.
-- Extending the tool to output colors, associated with diff operations, in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
-```
+### Color Themes
+
+Output colorized line, associated with diff operations, in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
+
+### Diff Formats
+Output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format. Just as the behaviour of the GNU `diff` tool, the desired one could be specified as a command-line argument.
