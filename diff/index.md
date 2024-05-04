@@ -119,11 +119,12 @@ This automatically means that we wouldn't want to be considering matching blocks
 
 This particular representation is also referred to as _unified format_, in the context of the GNU `diff` tool, and that was the relevance of the `-u` command-line argument  in the opening paragraph (alternatively accessible via the `--unified` flag). Some alternative representations, which we won't be discussing in this chapter are the _normal format_ (`--normal`) and _context format_ (`-c` or `--context`). They're closely related and are possible to be derived - with relatively minor modifications - using the approaches which we'll get acquainted with in this chapter. Naturally, for further details and even more possible representations, you're welcome to refer to GNU `diff`'s `man` pages.
 
-Let's step back a bit and try to think in what domains we'd expect the kind of algorithms that we need in this case to originate. Given two or more sequences of comparable-for-equality items, it is of interest to identify the longest possible stretches of items which are equal between the sequences under consideration.
+Let's step back a bit and try to think in what domains we'd expect the kind of algorithms that we need in this case to originate. Given two or more sequences of comparable-for-equality items, it is of interest to identify the longest possible subsequences of items which are equal between the sequences under consideration.
 
-```
-## TODO: A brief paragraph about applications, such as string similarity and bioinformatics.
-```
+- For instance, in bioinformatics and molecular biology, DNA sequences can be represented via the symbols A, C, G and T which correspond to the four nucleobases, associated with DNA molecules, namely adenine, cytosine, guanine and thymine. One possible use-case is comparison between DNA sequences for the purpose of capturing some notion of similarity, for instance, with respect to a new DNA sequence. Then, one form of a similarity metric is finding the longest common subsequence between the input sequences.
+- In computational linguistics, two strings may be compared for similarity in multiple ways, and the longest common subsequence is one way of solving the approximate string matching problem.
+- In terminal-based text editor implementations, screen redisplay may be viewed as the minimum length sequence of characters that need to be changed in order for the screen update to be performed, in accordance to file changes. The longest common subsequence is relevant in that context, because it delineates the parts of the screen that don't need updating.
+- Identifying differences between files, which is the main topic of this chapter.
 
 For simplicity and ease of visualization, let's consider pairs of strings of characters, which are equivalent - relative to each other - to the source-code example from the beginning section. Two arbitrary string sequences - where each character is a line in a file - which meet these needs are the following ones:
 ```bash
@@ -209,6 +210,9 @@ You'll also notice that each complete path (that is, a solution leading from a s
 ```
 ## TODO:
 - A narrative transition and a couple of equations which briefly introduce how the dynamic programming table is built.
+Define a subsequence to be any output string obtained by deleting zero or more symbols from an input string.
+The Longest Common Subsequence (LCS) is a subsequence of maximum length common to two or more strings.
+
 S[i, j] = ...
 where S[i, j] corresponds to the solution as of current step _t_ being at index _i_ in the first list and index _j_ in the second one, i.e., X_i and Y_j, respectively.
 
@@ -580,4 +584,4 @@ TODO: Summary.
 Produce colorized output in correspondence to different pre-set themes, with the theme name of choice specified as an optional command-line argument, and assuming a default value otherwise.
 
 ### Diff Formats
-Output other diff formats, such as the context format, normal format, `ed` format, RCS format and side-by-side format. Just as the behaviour of the GNU `diff` tool, the desired one could be specified as an optional command-line argument, assuming a default value otherwise.
+Output other diff formats, such as the context format, normal format, `ed` format, RCS format, side-by-side format, line-group format and if-then-else format. Just as the behaviour of the GNU `diff` tool, the desired one could be specified as an optional command-line argument, assuming a default value otherwise.
