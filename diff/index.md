@@ -480,7 +480,23 @@ diffFormat = \x, y ->
 formatDiff : Diff -> List Str
 ```
 
-Thus, we defer text colorizing to the `formatDiff` function where, based on the value of `DiffOp`, colors are applied to the `content` value of a `Line`. Further, `diffFormat` becomes our core function - it takes two list of strings as input and returns another list of strings, corresponding to the diff of the former.
+Thus, we defer text colorizing to the `formatDiff` function where, based on the value of `DiffOp`, colors are applied to the `content` value of a `Line`. Further, `diffFormat` becomes our highest-level function, in terms of abstraction. Basically, it computes the diff and then formats it accordingly, for the purpose of readability. It takes two list of strings as input and returns another list of strings, corresponding to the diff of the former. The distinction between `formatDiff` and `diffFormat` is that the former is an auxiliary function which applies formatting to a diff, and the latter is our end-to-end function which computes a diff and then applies formatting.
+
+The body of the `formatDiff` function is as follows:
+```roc
+formatDiff = \diffResult ->
+    List.map diffResult \elem ->
+        (_, source) = unpackLine elem.source
+        (_, target) = unpackLine elem.target
+
+        when elem.op is
+            Match -> "  $(source)"
+            Insertion -> colorizeText GreenFg "+ $(target)"
+            Deletion -> colorizeText RedFg "- $(source)"
+
+unpackLine : Line -> (U64, Str)
+unpackLine = \@Line { lineNumber, content } -> (lineNumber, content)
+```
 
 ## Section N.5: Unified Format
 ```
