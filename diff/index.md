@@ -1,13 +1,11 @@
 ---
 ---
 
-# Chapter N: A Diff Tool
+-  The difference between two sequences can be represented as a conversion of a source sequence to a target sequence, via applying a series of insertion, deletion and matching operations, in an element-wise manner.
+- Being able to represent the differences between two files is a fundamental feature of version-control systems, whereby it serves to display a commit, the difference between two commits and assist in branch merging operations.
+- Context is important when representing differences, and different formats may choose to achieve this via take advantage of context in different ways.
 
-| <span style="font-weight:normal; text-align: left;"><ul><li>The difference between two sequences can be represented as a conversion of a source sequence to a target sequence, via applying a series of insertion, deletion and matching operations, in an element-wise manner.</li><li>Being able to represent the differences between two files is a fundamental feature of version-control systems, whereby it serves to display a commit, the difference between two commits and assist in branch merging operations.</li><li>Context is important when representing differences, and different formats may choose to achieve this via take advantage of context in different ways.</ul></span> |
-|:----------------------------------------------|
-
-| <span style="font-weight:normal; text-align: left;">Terms defined: [**Ability**](#), [**diff**](#), [**dynamic programming**](#), [**longest common subsequence**](#), [**memoization**](#), [**merge**](#), [**opaque type**](#), [**platform**](#), [**version-control system**](#)</span> |
-|:----------------------------------------------|
+Terms defined: ability, diff, dynamic programming, longest common subsequence, memoization, merge, opaque type, platform, version-control system
 
 1. [Representation](#section-n1-representation)
 2. [Longest Common Subsequence (LCS)](#section-n2-longest-common-subsequence-lcs)
