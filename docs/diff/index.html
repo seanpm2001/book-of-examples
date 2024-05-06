@@ -272,48 +272,396 @@ LCS("εABCDEFGH", "εIBCDEFJH") = 6
 
 <p>The conventional way to build the data structure is in a tabular form. We arbitrarily set the row headers to correspond to the elements of the source list and the column headers - to those of the target one.</p>
 
-<p>The complete table is as follows:
-|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
-| :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: |
-|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   A   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   B   |   0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
-|   C   |   0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
-|   D   |   0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
-|   E   |   0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
-|   F   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   G   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   6   |</p>
+<p>The complete table is as follows:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center"> </th>
+      <th style="text-align: center">ε</th>
+      <th style="text-align: center">I</th>
+      <th style="text-align: center">B</th>
+      <th style="text-align: center">C</th>
+      <th style="text-align: center">D</th>
+      <th style="text-align: center">E</th>
+      <th style="text-align: center">F</th>
+      <th style="text-align: center">J</th>
+      <th style="text-align: center">H</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">ε</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">A</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">B</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">C</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">D</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">E</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">F</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">G</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">H</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">6</td>
+    </tr>
+  </tbody>
+</table>
 
 <p>As you can see, we conventionally take a note of the length of the longest common subsequence found as of a given iteration step. This isn’t really fundamental to our difference representation problem, but will come in handy at the stage when we’ll need to heuristically decide which path to present as the ultimate solution. The other bit of information that we take a note of is somehow more relevant, namely the operation which we perform at a given iteration step, based on the equality between the current list elements <code class="language-plaintext highlighter-rouge">X</code><sub><code class="language-plaintext highlighter-rouge">i</code></sub> and <code class="language-plaintext highlighter-rouge">Y</code><sub><code class="language-plaintext highlighter-rouge">j</code></sub> as of that iteration step.</p>
 
 <p>Once we’ve built the table, it becomes obvious that all solutions correspond to movements along the table cells in one of three possible directions at a time: right, down or diagonally right-down. The complete paths - which are effectively possible solutions to the diff problem - correspond to moves from the top left cell to the bottom right cell.</p>
 
-<p>The most intuitive path and solution discussed before is the following one:
-|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
-| :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: |
-|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   A   |  ↑0   |  ←0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   B   |   0   |   0   |  ↖1   |   1   |   1   |   1   |   1   |   1   |   1   |
-|   C   |   0   |   0   |   1   |  ↖2   |   2   |   2   |   2   |   2   |   2   |
-|   D   |   0   |   0   |   1   |   2   |  ↖3   |   3   |   3   |   3   |   3   |
-|   E   |   0   |   0   |   1   |   2   |   3   |  ↖4   |   4   |   4   |   4   |
-|   F   |   0   |   0   |   1   |   2   |   3   |   4   |  ↖5   |   5   |   5   |
-|   G   |   0   |   0   |   1   |   2   |   3   |   4   |  ↑5   |  ←5   |   5   |
-|   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |  ↖6   |</p>
+<p>The most intuitive path and solution discussed before is the following one:</p>
 
-<p>Correspondingly, the least intuitive solution corresponds to this path:
-|       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
-| :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: | :—: |
-|   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   A   |  ↑0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
-|   B   |  ↑0   |   0   |   1   |   1   |   1   |   1   |   1   |   1   |   1   |
-|   C   |  ↑0   |   0   |   1   |   2   |   2   |   2   |   2   |   2   |   2   |
-|   D   |  ↑0   |   0   |   1   |   2   |   3   |   3   |   3   |   3   |   3   |
-|   E   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   4   |   4   |   4   |
-|   F   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   G   |  ↑0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |   5   |
-|   H   |  ↑0   |  ←0   |  ←1   |  ←2   |  ←3   |  ←4   |  ←5   |  ←5   |  ←6   |</p>
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center"> </th>
+      <th style="text-align: center">ε</th>
+      <th style="text-align: center">I</th>
+      <th style="text-align: center">B</th>
+      <th style="text-align: center">C</th>
+      <th style="text-align: center">D</th>
+      <th style="text-align: center">E</th>
+      <th style="text-align: center">F</th>
+      <th style="text-align: center">J</th>
+      <th style="text-align: center">H</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">ε</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">A</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">←0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">B</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">↖1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">C</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">↖2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">D</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">↖3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">E</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">↖4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">F</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">↖5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">G</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">↑5</td>
+      <td style="text-align: center">←5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">H</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">↖6</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Correspondingly, the least intuitive solution corresponds to this path:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center"> </th>
+      <th style="text-align: center">ε</th>
+      <th style="text-align: center">I</th>
+      <th style="text-align: center">B</th>
+      <th style="text-align: center">C</th>
+      <th style="text-align: center">D</th>
+      <th style="text-align: center">E</th>
+      <th style="text-align: center">F</th>
+      <th style="text-align: center">J</th>
+      <th style="text-align: center">H</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">ε</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">A</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">0</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">B</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">1</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">C</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">2</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">D</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">3</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">E</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">4</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">F</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">G</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+      <td style="text-align: center">5</td>
+    </tr>
+    <tr>
+      <td style="text-align: center">H</td>
+      <td style="text-align: center">↑0</td>
+      <td style="text-align: center">←0</td>
+      <td style="text-align: center">←1</td>
+      <td style="text-align: center">←2</td>
+      <td style="text-align: center">←3</td>
+      <td style="text-align: center">←4</td>
+      <td style="text-align: center">←5</td>
+      <td style="text-align: center">←5</td>
+      <td style="text-align: center">←6</td>
+    </tr>
+  </tbody>
+</table>
 
 <p>This visual representation enables us to build further intuition regarding the desired solution form. Heuristically speaking, we observe that favorable solutions will involve, wherever applicable, long stretches of deletions from the source list and long stretches of insertions from the target list, interspersed with long stretches of matching (i.e., common) subsequences.</p>
 
@@ -347,16 +695,22 @@ buildTable = \x, y -&gt;
         )
 </code></pre>
 
-<p>Our <code class="language-plaintext highlighter-rouge">buildTable</code> function takes two arbitrary lists of the same type - which itself is guaranteed to implement the built-in <code class="language-plaintext highlighter-rouge">Eq</code> ability - and builds an LCS table, which is then returned to the caller. The table is of type <code class="language-plaintext highlighter-rouge">Dict (U64, U64) U64</code> and this corresponds to a dictionary whose keys are tuples of <code class="language-plaintext highlighter-rouge">(i, j)</code> table indices, both of type <code class="language-plaintext highlighter-rouge">U64</code> and the value corresponds to the length of the longest common subsequence associated with the sublists of the input lists, ending at indices <code class="language-plaintext highlighter-rouge">i</code> and <code class="language-plaintext highlighter-rouge">j</code>. We utilize the standard library <code class="language-plaintext highlighter-rouge">List.walkWithIndex</code> function to iterate row by row, and element by element, within each row.
-<code class="language-plaintext highlighter-rouge">Result.withDefault 0</code> is logically never expected to become effective, because the indices <code class="language-plaintext highlighter-rouge">i</code> and <code class="language-plaintext highlighter-rouge">j</code> are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via <code class="language-plaintext highlighter-rouge">if i == 0 || j == 0 then 0</code>. Alternatively, we could’ve pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and <code class="language-plaintext highlighter-rouge">crash</code>ed, if we ever got an error of type <code class="language-plaintext highlighter-rouge">KeyNotFound</code>, because something fundamental had gone wrong at that stage, and wasn’t possible to be caught via our test suite.</p>
+<p>Our <code class="language-plaintext highlighter-rouge">buildTable</code> function takes two arbitrary lists of the same type and builds an LCS table, which is returned to the caller. The type itself is guaranteed to implement the built-in <code class="language-plaintext highlighter-rouge">Eq</code> ability, and the table is of type <code class="language-plaintext highlighter-rouge">Dict (U64, U64) U64</code>. The latter corresponds to a dictionary whose keys are tuples of <code class="language-plaintext highlighter-rouge">(i, j)</code> table indices, both of type <code class="language-plaintext highlighter-rouge">U64</code> and the value corresponds to the length of the longest common subsequence associated with the sublists, of the input lists, ending at indices <code class="language-plaintext highlighter-rouge">i</code> and <code class="language-plaintext highlighter-rouge">j</code>. We utilize the standard library <code class="language-plaintext highlighter-rouge">List.walkWithIndex</code> function to iterate row by row, and element by element, within each row.
+<code class="language-plaintext highlighter-rouge">Result.withDefault 0</code> is logically never expected to become effective, because the indices <code class="language-plaintext highlighter-rouge">i</code> and <code class="language-plaintext highlighter-rouge">j</code> are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via <code class="language-plaintext highlighter-rouge">if i == 0 || j == 0 then 0</code>. Alternatively, we could’ve pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and <code class="language-plaintext highlighter-rouge">crash</code>ed with an indicative enough message, if we ever got an error of type <code class="language-plaintext highlighter-rouge">KeyNotFound</code>, because something fundamental had gone wrong at that stage, and wasn’t possible to be caught via our test suite.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>## TODO: Code walkthrough.
-## TODO: Narrative transition to diff and diffHelp.
-</code></pre></div></div>
+<p>Our next step is to actually traverse the data structure we’ve just built, and find our way through it via what we deem heuristically to be the best path, in order to ultimately arrive at an intuitive solution.</p>
 
 <pre><code class="language-roc">beginningMark = "ε"
 
 diff : List Str, List Str -&gt; List Str
+diff = \x, y -&gt;
+    xPrim = List.prepend x beginningMark
+    yPrim = List.prepend y beginningMark
+</code></pre>
+
+<p>We begin by prepending the sentinel value <code class="language-plaintext highlighter-rouge">ε</code> to our lists, so that we can define the base-cases in our dynamic programming solution. We also define a helper function, <code class="language-plaintext highlighter-rouge">diffHelp</code>, which takes as inputs the already-built table, the updated lists, and the 0-based indices, corresponding to the last element in each list. In other words, we start at the bottom right of our table and proceed to complete our traversal at top left cell. We explicitly pass the current indices to <code class="language-plaintext highlighter-rouge">diffHelp</code> because we would like to be able to call it recursively, and only stop once we’ve completed the traversal of our LCS table.</p>
+
+<pre><code class="language-roc">diff : List Str, List Str -&gt; List Str
 diff = \x, y -&gt;
     xPrim = List.prepend x beginningMark
     yPrim = List.prepend y beginningMark
@@ -391,19 +745,19 @@ diffHelp = \lcs, x, y, i, j -&gt;
     else
         []
 </code></pre>
+<p>We store the current element values of the lists in <code class="language-plaintext highlighter-rouge">xi</code> and <code class="language-plaintext highlighter-rouge">yj</code> respectively; <code class="language-plaintext highlighter-rouge">up</code> and <code class="language-plaintext highlighter-rouge">left</code> are the LCS lengths associated with the cells above and to tte left of the current cell. If the current elements are equal, we proceed diagonally in a top-left direction, because the reverse operation, i.e., moving in a bottom-right direction corresponds to matching the current elements and effectively “skipping” them, without performing either insertion or deletion. If however, the LCS length in the cell to the left is greater than or equal to the cell above, then we proceed with our traversal to the left. Otherwise, we move up. This is because we’ve established that intuitively we would like to arrange the diff operations in such way, so that deletion operations from the source list come before the insertion operations from the target list. And when we’re traversing the table backwards, we give priority to the latter, when the correponding LCS lengths are equal.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>## TODO: Code walkthrough.
-</code></pre></div></div>
+<p>Additionally, upon each conditional branch, we check the boundary condition of whether we’re either at the <code class="language-plaintext highlighter-rouge">0</code>th row or <code class="language-plaintext highlighter-rouge">0</code>th column.</p>
 
 <h2 id="section-n3-colorized-output">Section N.3: Colorized Output</h2>
 
-<p>Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations, that constitute the diff are. It is important to note that the GNU <code class="language-plaintext highlighter-rouge">diff</code> tool doesn’t provide color-coding per se, but it instead formats the output in a standardized way, so that this representation could optionally undergo subsequent syntax highlighting via other tools, editors and IDEs, as applicable.</p>
+<p>Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations which constitute the diff are. It is important to note that the GNU <code class="language-plaintext highlighter-rouge">diff</code> tool doesn’t provide color-coding per se, but it instead formats the output in a standardized way, so that the associated representation could optionally undergo subsequent syntax highlighting via other tools, editors or IDEs, as applicable.</p>
 
-<p>In this section we’ll briefly introduce some rudimentary color-coding to our diff output, and in subsequent sections we’ll generalize our post-processing logic, which will enable us to perform the color-coding in a bit more elegant manner, as well as perform other post-processing steps, with the intention of increasing the degree of interpretability of the output.</p>
+<p>In this section we’ll briefly introduce some rudimentary color-coding to our diff output, and in the following one we’ll generalize our post-processing logic, which will enable us to perform color-coding in a bit more elegant manner. It’ll also enable us to perform other post-processing steps, for the purpose of increasing the degree of interpretability of the output.</p>
 
 <p>We’ll follow <code class="language-plaintext highlighter-rouge">git</code>’s diff representation, namely colorizing lines corresponding to insertions in green, and those corresponding to deletions - in red. Please, note that this doesn’t take any special consideration of terminal emulator themes, nor any other external context.</p>
 
-<p>Practically speaking, terminal output colorization is achieved via what are referred to as ANSI escape codes. We prepend a sequence of characters before the line to denote that we want a foreground color to be applied to all characters on that line. In order to preserve the formatting on lines where the same diff operation doesn’t apply, we append an escape code for resetting the formatting at the end of each colorized line, namely <code class="language-plaintext highlighter-rouge">"\u(001b)[0m"</code>. Correspondingly, the escape codes for green and red foreground color are <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;32m"</code> and <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;31m"</code>.</p>
+<p>Practically speaking, terminal output colorization is achieved via what are referred to as ANSI escape codes. We prepend a sequence of characters to the line to denote that we want a foreground color to be applied to all characters on that line. In order to preserve the formatting on lines where the same diff operation doesn’t apply, we append an escape code for resetting the formatting at the end of each colorized line, namely <code class="language-plaintext highlighter-rouge">"\u(001b)[0m"</code>. The escape codes for green and red foreground colors are <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;32m"</code> and <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;31m"</code>, respectively.</p>
 
 <p>For further details, please, refer to the “Colors” section of Wikipedia’s “ANSI escape code” page<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>. Now let’s implement a simple text colorization function.</p>
 
@@ -419,7 +773,7 @@ colorizeText = \color, input -&gt;
         RedFg -&gt; "$(red)$(input)$(resetFormatting)"
 </code></pre>
 
-<p>And just like this, we’re able to arbitrarily apply colors to text. Now, we can actually color-code our diff operations - insertion in green and deletion in red. Please, note that the color choices are arbitrary in this case. It would be equally seamless to colorize the background of each line, i.e., achieve some sort of highlighting, via employing <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;42m"</code> and <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;41m"</code> for green and red, correspondingly. This is because background colors span over the 40 to 48 escape-code range.</p>
+<p>And just like this, we’re able to arbitrarily apply colors to text. Our diff operations are color-coded - insertions in green and deletions in red. Please, note that the color choices are arbitrary in this case. It would be equally seamless to colorize the background of each line, i.e., achieve some sort of highlighting, via employing <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;42m"</code> and <code class="language-plaintext highlighter-rouge">"\u(001b)[6;33;41m"</code> for green and red, correspondingly. This is because background colors span over the 40 to 48 escape-code range.</p>
 
 <pre><code class="language-roc">    else if j &gt; 0 &amp;&amp; (i == 0 || left &gt;= up) then
         List.append (diffHelp lcs x y i (j - 1)) (colorizeText GreenFg "+ $(yj)")
@@ -427,7 +781,7 @@ colorizeText = \color, input -&gt;
         List.append (diffHelp lcs x y (i - 1) j) (colorizeText RedFg "- $(xi)")
 </code></pre>
 
-<p>Putting our <code class="language-plaintext highlighter-rouge">colorizeText</code> function to use in our <code class="language-plaintext highlighter-rouge">diffHelp</code> function, we’re now able to associate our colorization preferences to the insertion and deletion operations.</p>
+<p>By putting our <code class="language-plaintext highlighter-rouge">colorizeText</code> function to use in our <code class="language-plaintext highlighter-rouge">diffHelp</code> function, we’re now able to associate our colorization preferences to the insertion and deletion operations.</p>
 
 <h2 id="section-n4-diff-context">Section N.4: Diff Context</h2>
 
@@ -658,7 +1012,7 @@ filterDiffHelp = \diffResult, contextSize -&gt;
                 subseqRanges
 </code></pre>
 
-<p>We employ two auxiliary functoins in <code class="language-plaintext highlighter-rouge">filterDiffHelp</code>, and they’re defined as follows:</p>
+<p>We employ two auxiliary functions in <code class="language-plaintext highlighter-rouge">filterDiffHelp</code>, and they’re defined as follows:</p>
 <pre><code class="language-roc">slice : List elem, U64, U64 -&gt; List elem
 slice = \list, fromInclusive, untilInclusive -&gt;
     List.sublist list { start: fromInclusive, len: 1 + untilInclusive - fromInclusive }
@@ -699,13 +1053,8 @@ maybeTrimRange = \(first, last), lastIdx, maxLength -&gt;
 </code></pre></div></div>
 
 <h2 id="section-n6-putting-it-all-together">Section N.6: Putting It All Together</h2>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TODO:
-- Utilizing the functionality as a Roc library code (interface in this case) called from a Roc tool.
-- Discussion on how our tool may be utilized as a `git diff` tool.
-</code></pre></div></div>
-
 <p>In order to be able to employ our diff functionality in the real world, we’ll need to promote it to an executable, which we’ll then run against arbitrary input files.
-Let’s create a file called <code class="language-plaintext highlighter-rouge">main.roc</code> and import the exposed <code class="language-plaintext highlighter-rouge">diffFormat</code> function, which will do all associated heavy-lifting.</p>
+Let’s create a file called <code class="language-plaintext highlighter-rouge">main.roc</code> and import the exposed <code class="language-plaintext highlighter-rouge">diffFormat</code> function, which will do all the associated heavy-lifting.</p>
 
 <pre><code class="language-roc">app "diff"
     packages {
@@ -723,7 +1072,7 @@ Let’s create a file called <code class="language-plaintext highlighter-rouge">
     provides [main] to cli
 </code></pre>
 
-<p>We’ll be basing our diff tool on top of the <code class="language-plaintext highlighter-rouge">basic-cli</code> platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we’re importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arguments and perform file reading operations.</p>
+<p>We’re going to base our diff tool on the <code class="language-plaintext highlighter-rouge">basic-cli</code> platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we’re importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arguments and perform file reading operations.</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ roc build main.roc --output rocdiff
 0 errors and 0 warnings found in 522 ms
@@ -731,6 +1080,8 @@ Let’s create a file called <code class="language-plaintext highlighter-rouge">
 
     rocdiff
 </code></pre></div></div>
+
+<p>Now that we have the freshly minted <code class="language-plaintext highlighter-rouge">rocdiff</code> executable in our local directory, it’s time for an actual test:</p>
 <div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">$</span> ./rocdiff Hello.roc HelloWorld.roc
 <span class="gd">- app "hello"
 </span><span class="gi">+ app "hello-world"
@@ -744,33 +1095,119 @@ Let’s create a file called <code class="language-plaintext highlighter-rouge">
 </span>
 </code></pre></div></div>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git difftool <span class="nt">--extcmd</span><span class="o">=</span><span class="sb">`</span><span class="nb">realpath</span> ./rocdiff<span class="sb">`</span>
+<p>Nice! We’ve got the expected output.</p>
+
+<p>Any external tool can be used as a <code class="language-plaintext highlighter-rouge">git diftool</code>, and so can our own <code class="language-plaintext highlighter-rouge">rocdiff</code>. You can run the following in any directory, associated with a <code class="language-plaintext highlighter-rouge">git</code> repository:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git difftool <span class="nt">--extcmd</span><span class="o">=</span>&lt;full_rocdiff_path&gt;
+
+Viewing <span class="o">(</span>1/&lt;total_number_of_changed_files&gt;<span class="o">)</span>: <span class="s1">'&lt;changed_file_path&gt;'</span>
+Launch <span class="s1">'&lt;path_to_rocdiff&gt;'</span> <span class="o">[</span>Y/n]?
 </code></pre></div></div>
-<p>Or if you don’t have any outstanding unstaged changes, then you could see for example the diff between any arbitrary two commits, for example, <code class="language-plaintext highlighter-rouge">HEAD~..HEAD</code> will show you the most recent commit:</p>
+
+<p>Just as <code class="language-plaintext highlighter-rouge">git diff</code>, it’ll show all unstaged differences. Please, note that <code class="language-plaintext highlighter-rouge">git difftool</code>, regardless of what the external tool is, behaves slightly differently and asks for confirmation regarding launching the corresponding diff tool, with respect to each changed file.</p>
+
+<p>If you don’t have any outstanding unstaged changes, you could, for instance, view the diff between any arbitrary two commits. For example, <code class="language-plaintext highlighter-rouge">HEAD~..HEAD</code> will show you the most recent commit:</p>
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git difftool <span class="nt">--extcmd</span><span class="o">=</span><span class="sb">`</span><span class="nb">realpath</span> ./rocdiff<span class="sb">`</span> HEAD~..HEAD
 </code></pre></div></div>
 
-<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># .git/config
-</span><span class="nn">[diff]</span>
+<p>The above will only utilize our diff tool on a one-off basis. If we want this to apply to an entire repository, we could add the following to the <code class="language-plaintext highlighter-rouge">.git/config</code> file of the repository in question:</p>
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[diff]</span>
     <span class="py">tool</span> <span class="p">=</span> <span class="s">rocdiff</span>
 
 <span class="nn">[difftool "rocdiff"]</span>
-    <span class="py">cmd</span> <span class="p">=</span> <span class="s">&lt;full_path_to_rocdiff_dir&gt;/rocdiff "$LOCAL" "$REMOTE"</span>
+    <span class="py">cmd</span> <span class="p">=</span> <span class="s">&lt;full_rocdiff_path&gt; "$LOCAL" "$REMOTE"</span>
 </code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">[difftool "rocdiff"]</code> section defines our <code class="language-plaintext highlighter-rouge">rocdiff</code> tool within the context of <code class="language-plaintext highlighter-rouge">git difftool</code> so that our tool may be referenced from within that context. The <code class="language-plaintext highlighter-rouge">[diff]</code> section sets the actual <code class="language-plaintext highlighter-rouge">git difftool</code> to <code class="language-plaintext highlighter-rouge">rocdiff</code>, based on said definition. Please, ensure that you replace <code class="language-plaintext highlighter-rouge">&lt;full_rocdiff_path&gt;</code> with the actual full absolute path to the <code class="language-plaintext highlighter-rouge">rocdiff</code> executable on your local machine.</p>
 
-<p>Or alternatively this could be set from the command line, with respect to the local repository:</p>
+<p>Further, note that, if you’ve already got an existing <code class="language-plaintext highlighter-rouge">tool</code> set in the <code class="language-plaintext highlighter-rouge">[diff]</code> section, you’ll have to either remove the existing section, comment it out, or just add the new <code class="language-plaintext highlighter-rouge">[diff]</code> section, containing <code class="language-plaintext highlighter-rouge">tool = rocdiff</code>, after all other pre-existing <code class="language-plaintext highlighter-rouge">[diff]</code> sections. This is necessary, because <code class="language-plaintext highlighter-rouge">git difftool</code> will only take only the last one into account.</p>
+
+<p>Please, note that any supported <code class="language-plaintext highlighter-rouge">rocdiff</code> command-line arguments may be specified as well.</p>
+
+<p>Alternatively, the above could be set from the command line, with respect to the local repository, assuming we’ve already navigated to it:</p>
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git config diff.tool rocdiff
-git config difftool.rocdiff.cmd "&lt;full_path_to_rocdiff_dir&gt;/rocdiff \$LOCAL \$REMOTE"
+git config difftool.rocdiff.cmd "&lt;full_rocdiff_path&gt; \$LOCAL \$REMOTE"
 </code></pre></div></div>
 
-<p>Adding the <code class="language-plaintext highlighter-rouge">--global</code> flag applies these changes globally, and the configured <code class="language-plaintext highlighter-rouge">difftool</code> could be utilized in any <code class="language-plaintext highlighter-rouge">git</code> repository on the same host.</p>
+<p>Adding the <code class="language-plaintext highlighter-rouge">--global</code> flag after <code class="language-plaintext highlighter-rouge">git config</code> applies the equivalent changes globally and, this way, the configured <code class="language-plaintext highlighter-rouge">difftool</code> can be utilized in any <code class="language-plaintext highlighter-rouge">git</code> repository on the same host, and the same user, with respect to which the <code class="language-plaintext highlighter-rouge">git config</code> operation applies; i.e., this is the user whose <code class="language-plaintext highlighter-rouge">${HOME}/.gitconfig</code> gets edited as a result. Just as in the local repository case discussed above, equivalent edits to the global (with respect to a given user) <code class="language-plaintext highlighter-rouge">.gitconfig</code> file are going to result in the same behaviour, as the resulting behaviour from <code class="language-plaintext highlighter-rouge">git config --global</code>.</p>
 
+<p>Now, regardless of whether we’ve opted to modify the local or global <code class="language-plaintext highlighter-rouge">git</code> config, our default <code class="language-plaintext highlighter-rouge">difftool</code> is set to <code class="language-plaintext highlighter-rouge">rocdiff</code> and can be invoked directly as follows:</p>
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git difftool
 </code></pre></div></div>
 
-<p>Just as above - and as in the case of <code class="language-plaintext highlighter-rouge">git diff</code> itself, an arbitrary diff range could be specified, in case there are no unstaged changes in the current <code class="language-plaintext highlighter-rouge">git</code> repository.</p>
+<p>Just as above - and as in the case of <code class="language-plaintext highlighter-rouge">git diff</code> itself - an arbitrary diff range could be specified. In case there are no unstaged changes in the current <code class="language-plaintext highlighter-rouge">git</code> repository, the most recent commit, if one exists, could be shown as follows:</p>
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git difftool HEAD~..HEAD
 </code></pre></div></div>
+
+<p>If at any point, you’d like to switch back to your previous configuration, you can just delete or comment out the <code class="language-plaintext highlighter-rouge">rocdiff</code> section which sets <code class="language-plaintext highlighter-rouge">tool = rocdiff</code> from your <code class="language-plaintext highlighter-rouge">git</code> config, as necessary:</p>
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#[diff]
+#    tool = rocdiff
+</span></code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">[difftool "rocdiff"]</code> definition section does not have to be removed.</p>
+
+<p>Please, note that <code class="language-plaintext highlighter-rouge">git difftool</code> and <code class="language-plaintext highlighter-rouge">git diff</code> are completely distinct operations.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TODO
+Reference:
+http://git-scm.com/docs/gitattributes#_defining_an_external_diff_driver
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TODO
+GIT_EXTERNAL_DIFF=...
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TODO
+$ cat .git/config
+...
+[diff "rocdiff"]
+    command = &lt;full_rocdiff_path&gt; "$LOCAL" "$REMOTE"
+
+$ cat .gitattributes
+* diff=rocdiff
+
+$ git diff --ext-diff
+</code></pre></div></div>
+
+<pre><code class="language-TODO">$ man git
+...
+       GIT_EXTERNAL_DIFF
+           When the environment variable GIT_EXTERNAL_DIFF is set, the program named by it is called, instead of the diff invocation described above. For a path that is added, removed, or modified, GIT_EXTERNAL_DIFF is called with 7 parameters:
+
+               path old-file old-hex old-mode new-file new-hex new-mode
+
+           where:
+
+       &lt;old|new&gt;-file
+           are files GIT_EXTERNAL_DIFF can use to read the contents of &lt;old|new&gt;,
+
+       &lt;old|new&gt;-hex
+           are the 40-hexdigit SHA-1 hashes,
+
+       &lt;old|new&gt;-mode
+           are the octal representation of the file modes.
+
+           The file parameters can point at the user’s working file (e.g.  new-file in "git-diff-files"), /dev/null (e.g.  old-file when a new file is added), or a temporary file (e.g.  old-file in the index).  GIT_EXTERNAL_DIFF should not worry about unlinking the temporary file --- it is removed when
+           GIT_EXTERNAL_DIFF exits.
+
+           For a path that is unmerged, GIT_EXTERNAL_DIFF is called with 1 parameter, &lt;path&gt;.
+
+           For each path GIT_EXTERNAL_DIFF is called, two environment variables, GIT_DIFF_PATH_COUNTER and GIT_DIFF_PATH_TOTAL are set.
+...
+
+
+$ man git-config
+...
+       diff.external
+           If this config variable is set, diff generation is not performed using the internal diff machinery, but using the given command. Can be overridden with the ‘GIT_EXTERNAL_DIFF’ environment variable. The command is called with parameters as described under "git Diffs" in git(1). Note: if you want to
+           use an external diff program only on a subset of your files, you might want to use gitattributes(5) instead.
+
+...
+</code></pre>
+
+<pre><code class="language-TODO">$ git diff
+['diff/index.md', '/tmp/git-blob-pOomA2/index.md', '74124a8f9bb1da280a7b7ba2e3080ed76e04993f', '100644', 'diff/index.md', '0000000000000000000000000000000000000000', '100644']
+['diff/src/Lcs.roc', '/tmp/git-blob-DcMCZi/Lcs.roc', 'e2fc3001a10a1390c1cbab7f69d7a699b1117633', '100644', 'diff/src/Lcs.roc', '0000000000000000000000000000000000000000', '100644']
+</code></pre>
 
 <h2 id="section-n7-summary">Section N.7: Summary</h2>
 

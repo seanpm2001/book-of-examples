@@ -640,7 +640,7 @@ expect
         { op: Deletion,  source: @Line { lineNumber: 7, content: "G" }, target: @Line { lineNumber: 6, content: "F" } },
         { op: Insertion, source: @Line { lineNumber: 7, content: "G" }, target: @Line { lineNumber: 7, content: "J" } },
         { op: Match,     source: @Line { lineNumber: 8, content: "H" }, target: @Line { lineNumber: 8, content: "H" } },
-    ] 
+    ]
     actual = diff x y
     actual == expected
 

@@ -260,6 +260,7 @@ Conceptually, we've already built the data structure which will allow us to reco
 The conventional way to build the data structure is in a tabular form. We arbitrarily set the row headers to correspond to the elements of the source list and the column headers - to those of the target one.
 
 The complete table is as follows:
+
 |       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
@@ -277,6 +278,7 @@ As you can see, we conventionally take a note of the length of the longest commo
 Once we've built the table, it becomes obvious that all solutions correspond to movements along the table cells in one of three possible directions at a time: right, down or diagonally right-down. The complete paths - which are effectively possible solutions to the diff problem - correspond to moves from the top left cell to the bottom right cell.
 
 The most intuitive path and solution discussed before is the following one:
+
 |       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
@@ -290,6 +292,7 @@ The most intuitive path and solution discussed before is the following one:
 |   H   |   0   |   0   |   1   |   2   |   3   |   4   |   5   |   5   |  ↖6   |
 
 Correspondingly, the least intuitive solution corresponds to this path:
+
 |       |   ε   |   I   |   B   |   C   |   D   |   E   |   F   |   J   |   H   |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |   ε   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |   0   |
