@@ -1,7 +1,7 @@
 ---
 ---
 
--  The difference between two sequences can be represented as a conversion of a source sequence to a target sequence, via applying a series of insertion, deletion and matching operations, in an element-wise manner.
+- The difference between two sequences can be represented as a conversion of a source sequence to a target sequence, via applying a series of insertion, deletion and matching operations, in an element-wise manner.
 - Being able to represent the differences between two files is a fundamental feature of version-control systems, whereby it serves to display a commit, the difference between two commits and assist in branch merging operations.
 - Context is important when representing differences, and different formats may choose to achieve this via take advantage of context in different ways.
 
@@ -336,16 +336,22 @@ buildTable = \x, y ->
 ```
 
 Our `buildTable` function takes two arbitrary lists of the same type - which itself is guaranteed to implement the built-in `Eq` ability - and builds an LCS table, which is then returned to the caller. The table is of type `Dict (U64, U64) U64` and this corresponds to a dictionary whose keys are tuples of `(i, j)` table indices, both of type `U64` and the value corresponds to the length of the longest common subsequence associated with the sublists of the input lists, ending at indices `i` and `j`. We utilize the standard library `List.walkWithIndex` function to iterate row by row, and element by element, within each row.
-`Result.withDefault 0` is logically never expected to become effective, because the indices `i` and `j` are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via `if i == 0 || j == 0 then 0`. Alternatively, we could've pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and `crash`ed, if we ever got an error of type `KeyNotFound`, because something fundamental had gone wrong at that stage, and wasn't possible to be caught via our test suite.
+`Result.withDefault 0` is logically never expected to become effective, because the indices `i` and `j` are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via `if i == 0 || j == 0 then 0`. Alternatively, we could've pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and `crash`ed with an indicative enough message, if we ever got an error of type `KeyNotFound`, because something fundamental had gone wrong at that stage, and wasn't possible to be caught via our test suite.
 
-```
-## TODO: Code walkthrough.
-## TODO: Narrative transition to diff and diffHelp.
-```
+Our next step is to actually traverse the data structure we've just built, and find our way through it via what we deem heuristically to be the best path, in order to ultimately arrive at an intuitive solution.
 
 ```roc
 beginningMark = "ε"
 
+diff : List Str, List Str -> List Str
+diff = \x, y ->
+    xPrim = List.prepend x beginningMark
+    yPrim = List.prepend y beginningMark
+```
+
+We begin by prepending the sentinel value `ε` to our lists, so that we can define the base-cases in our dynamic programming solution. We also define a helper function, `diffHelp`, which takes as inputs the already-built table, the updated lists, and the 0-based indices, corresponding to the last element in each list. In other words, we start at the bottom right of our table and proceed to complete our traversal at top left cell. We explicitly pass the current indices to `diffHelp` because we would like to be able to call it recursively, and only stop once we've completed the traversal of our LCS table.
+
+```roc
 diff : List Str, List Str -> List Str
 diff = \x, y ->
     xPrim = List.prepend x beginningMark
@@ -661,7 +667,7 @@ filterDiffHelp = \diffResult, contextSize ->
                 subseqRanges
 ```
 
-We employ two auxiliary functoins in `filterDiffHelp`, and they're defined as follows:
+We employ two auxiliary functions in `filterDiffHelp`, and they're defined as follows:
 ```roc
 slice : List elem, U64, U64 -> List elem
 slice = \list, fromInclusive, untilInclusive ->
@@ -705,14 +711,8 @@ TODO: Code and narrative.
 ```
 
 ## Section N.6: Putting It All Together
-```
-TODO:
-- Utilizing the functionality as a Roc library code (interface in this case) called from a Roc tool.
-- Discussion on how our tool may be utilized as a `git diff` tool.
-```
-
 In order to be able to employ our diff functionality in the real world, we'll need to promote it to an executable, which we'll then run against arbitrary input files.
-Let's create a file called `main.roc` and import the exposed `diffFormat` function, which will do all associated heavy-lifting.
+Let's create a file called `main.roc` and import the exposed `diffFormat` function, which will do all the associated heavy-lifting.
 
 ```roc
 app "diff"
@@ -731,7 +731,7 @@ app "diff"
     provides [main] to cli
 ```
 
-We'll be basing our diff tool on top of the `basic-cli` platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we're importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arguments and perform file reading operations.
+We're going to base our diff tool on the `basic-cli` platform, which - as its name aptly suggests - provides all key ingredients that we need for our task. Correspondingly, we're importing a few of its features, so that we can write text to standard output and standard error streams, as well as read command-line arguments and perform file reading operations.
 
 ```
 $ roc build main.roc --output rocdiff
@@ -740,6 +740,8 @@ $ roc build main.roc --output rocdiff
 
     rocdiff
 ```
+
+Now that we have the freshly minted `rocdiff` executable in our local directory, it's time for an actual test:
 ```diff
 $ ./rocdiff Hello.roc HelloWorld.roc
 - app "hello"
@@ -754,38 +756,130 @@ $ ./rocdiff Hello.roc HelloWorld.roc
 
 ```
 
+Nice! We've got the expected output.
+
+Any external tool can be used as a `git diftool`, and so can our own `rocdiff`. You can run the following in any directory, associated with a `git` repository:
 ```bash
-$ git difftool --extcmd=`realpath ./rocdiff`
+$ git difftool --extcmd=<full_rocdiff_path>
+
+Viewing (1/<total_number_of_changed_files>): '<changed_file_path>'
+Launch '<path_to_rocdiff>' [Y/n]?
 ```
-Or if you don't have any outstanding unstaged changes, then you could see for example the diff between any arbitrary two commits, for example, `HEAD~..HEAD` will show you the most recent commit:
+
+Just as `git diff`, it'll show all unstaged differences. Please, note that `git difftool`, regardless of what the external tool is, behaves slightly differently and asks for confirmation regarding launching the corresponding diff tool, with respect to each changed file.
+
+If you don't have any outstanding unstaged changes, you could, for instance, view the diff between any arbitrary two commits. For example, `HEAD~..HEAD` will show you the most recent commit:
 ```bash
 $ git difftool --extcmd=`realpath ./rocdiff` HEAD~..HEAD
 ```
 
+The above will only utilize our diff tool on a one-off basis. If we want this to apply to an entire repository, we could add the following to the `.git/config` file of the repository in question:
 ```ini
-# .git/config
 [diff]
     tool = rocdiff
 
 [difftool "rocdiff"]
-    cmd = <full_path_to_rocdiff_dir>/rocdiff "$LOCAL" "$REMOTE"
+    cmd = <full_rocdiff_path> "$LOCAL" "$REMOTE"
 ```
+The `[difftool "rocdiff"]` section defines our `rocdiff` tool within the context of `git difftool` so that our tool may be referenced from within that context. The `[diff]` section sets the actual `git difftool` to `rocdiff`, based on said definition. Please, ensure that you replace `<full_rocdiff_path>` with the actual full absolute path to the `rocdiff` executable on your local machine.
 
-Or alternatively this could be set from the command line, with respect to the local repository:
+Further, note that, if you've already got an existing `tool` set in the `[diff]` section, you'll have to either remove the existing section, comment it out, or just add the new `[diff]` section, containing `tool = rocdiff`, after all other pre-existing `[diff]` sections. This is necessary, because `git difftool` will only take only the last one into account.
+
+Please, note that any supported `rocdiff` command-line arguments may be specified as well.
+
+Alternatively, the above could be set from the command line, with respect to the local repository, assuming we've already navigated to it:
 ```
 git config diff.tool rocdiff
-git config difftool.rocdiff.cmd "<full_path_to_rocdiff_dir>/rocdiff \$LOCAL \$REMOTE"
+git config difftool.rocdiff.cmd "<full_rocdiff_path> \$LOCAL \$REMOTE"
 ```
 
-Adding the `--global` flag applies these changes globally, and the configured `difftool` could be utilized in any `git` repository on the same host.
+Adding the `--global` flag after `git config` applies the equivalent changes globally and, this way, the configured `difftool` can be utilized in any `git` repository on the same host, and the same user, with respect to which the `git config` operation applies; i.e., this is the user whose `${HOME}/.gitconfig` gets edited as a result. Just as in the local repository case discussed above, equivalent edits to the global (with respect to a given user) `.gitconfig` file are going to result in the same behaviour, as the resulting behaviour from `git config --global`.
 
+Now, regardless of whether we've opted to modify the local or global `git` config, our default `difftool` is set to `rocdiff` and can be invoked directly as follows:
 ```bash
 $ git difftool
 ```
 
-Just as above - and as in the case of `git diff` itself, an arbitrary diff range could be specified, in case there are no unstaged changes in the current `git` repository.
+Just as above - and as in the case of `git diff` itself - an arbitrary diff range could be specified. In case there are no unstaged changes in the current `git` repository, the most recent commit, if one exists, could be shown as follows:
 ```bash
 $ git difftool HEAD~..HEAD
+```
+
+If at any point, you'd like to switch back to your previous configuration, you can just delete or comment out the `rocdiff` section which sets `tool = rocdiff` from your `git` config, as necessary:
+```ini
+#[diff]
+#    tool = rocdiff
+```
+
+The `[difftool "rocdiff"]` definition section does not have to be removed.
+
+Please, note that `git difftool` and `git diff` are completely distinct operations.
+
+```
+TODO
+Reference:
+http://git-scm.com/docs/gitattributes#_defining_an_external_diff_driver
+```
+
+```
+TODO
+GIT_EXTERNAL_DIFF=...
+```
+
+```
+TODO
+$ cat .git/config
+...
+[diff "rocdiff"]
+    command = <full_rocdiff_path> "$LOCAL" "$REMOTE"
+
+$ cat .gitattributes
+* diff=rocdiff
+
+$ git diff --ext-diff
+```
+
+```TODO
+$ man git
+...
+       GIT_EXTERNAL_DIFF
+           When the environment variable GIT_EXTERNAL_DIFF is set, the program named by it is called, instead of the diff invocation described above. For a path that is added, removed, or modified, GIT_EXTERNAL_DIFF is called with 7 parameters:
+
+               path old-file old-hex old-mode new-file new-hex new-mode
+
+           where:
+
+       <old|new>-file
+           are files GIT_EXTERNAL_DIFF can use to read the contents of <old|new>,
+
+       <old|new>-hex
+           are the 40-hexdigit SHA-1 hashes,
+
+       <old|new>-mode
+           are the octal representation of the file modes.
+
+           The file parameters can point at the user’s working file (e.g.  new-file in "git-diff-files"), /dev/null (e.g.  old-file when a new file is added), or a temporary file (e.g.  old-file in the index).  GIT_EXTERNAL_DIFF should not worry about unlinking the temporary file --- it is removed when
+           GIT_EXTERNAL_DIFF exits.
+
+           For a path that is unmerged, GIT_EXTERNAL_DIFF is called with 1 parameter, <path>.
+
+           For each path GIT_EXTERNAL_DIFF is called, two environment variables, GIT_DIFF_PATH_COUNTER and GIT_DIFF_PATH_TOTAL are set.
+...
+
+
+$ man git-config
+...
+       diff.external
+           If this config variable is set, diff generation is not performed using the internal diff machinery, but using the given command. Can be overridden with the ‘GIT_EXTERNAL_DIFF’ environment variable. The command is called with parameters as described under "git Diffs" in git(1). Note: if you want to
+           use an external diff program only on a subset of your files, you might want to use gitattributes(5) instead.
+
+...
+```
+
+```TODO
+$ git diff
+['diff/index.md', '/tmp/git-blob-pOomA2/index.md', '74124a8f9bb1da280a7b7ba2e3080ed76e04993f', '100644', 'diff/index.md', '0000000000000000000000000000000000000000', '100644']
+['diff/src/Lcs.roc', '/tmp/git-blob-DcMCZi/Lcs.roc', 'e2fc3001a10a1390c1cbab7f69d7a699b1117633', '100644', 'diff/src/Lcs.roc', '0000000000000000000000000000000000000000', '100644']
 ```
 
 ## Section N.7: Summary
