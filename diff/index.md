@@ -335,7 +335,7 @@ buildTable = \x, y ->
         )
 ```
 
-Our `buildTable` function takes two arbitrary lists of the same type - which itself is guaranteed to implement the built-in `Eq` ability - and builds an LCS table, which is then returned to the caller. The table is of type `Dict (U64, U64) U64` and this corresponds to a dictionary whose keys are tuples of `(i, j)` table indices, both of type `U64` and the value corresponds to the length of the longest common subsequence associated with the sublists of the input lists, ending at indices `i` and `j`. We utilize the standard library `List.walkWithIndex` function to iterate row by row, and element by element, within each row.
+Our `buildTable` function takes two arbitrary lists of the same type and builds an LCS table, which is returned to the caller. The type itself is guaranteed to implement the built-in `Eq` ability, and the table is of type `Dict (U64, U64) U64`. The latter corresponds to a dictionary whose keys are tuples of `(i, j)` table indices, both of type `U64` and the value corresponds to the length of the longest common subsequence associated with the sublists, of the input lists, ending at indices `i` and `j`. We utilize the standard library `List.walkWithIndex` function to iterate row by row, and element by element, within each row.
 `Result.withDefault 0` is logically never expected to become effective, because the indices `i` and `j` are iterated over in order and all previous entries will have been present. Further, the base cases where the boundaries of the table are delineated are already handled via `if i == 0 || j == 0 then 0`. Alternatively, we could've pattern matched for each of the possible previous-step operations - namely, match, insertion or deletion - and `crash`ed with an indicative enough message, if we ever got an error of type `KeyNotFound`, because something fundamental had gone wrong at that stage, and wasn't possible to be caught via our test suite.
 
 Our next step is to actually traverse the data structure we've just built, and find our way through it via what we deem heuristically to be the best path, in order to ultimately arrive at an intuitive solution.
@@ -387,20 +387,19 @@ diffHelp = \lcs, x, y, i, j ->
     else
         []
 ```
+We store the current element values of the lists in `xi` and `yj` respectively; `up` and `left` are the LCS lengths associated with the cells above and to tte left of the current cell. If the current elements are equal, we proceed diagonally in a top-left direction, because the reverse operation, i.e., moving in a bottom-right direction corresponds to matching the current elements and effectively "skipping" them, without performing either insertion or deletion. If however, the LCS length in the cell to the left is greater than or equal to the cell above, then we proceed with our traversal to the left. Otherwise, we move up. This is because we've established that intuitively we would like to arrange the diff operations in such way, so that deletion operations from the source list come before the insertion operations from the target list. And when we're traversing the table backwards, we give priority to the latter, when the correponding LCS lengths are equal.
 
-```
-## TODO: Code walkthrough.
-```
+Additionally, upon each conditional branch, we check the boundary condition of whether we're either at the `0`th row or `0`th column.
 
 ## Section N.3: Colorized Output
 
-Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations, that constitute the diff are. It is important to note that the GNU `diff` tool doesn't provide color-coding per se, but it instead formats the output in a standardized way, so that this representation could optionally undergo subsequent syntax highlighting via other tools, editors and IDEs, as applicable.
+Now, when we think about representation of differences between files, we usually have some expectation regarding color-coding as well, in order to better highlight what the associated operations which constitute the diff are. It is important to note that the GNU `diff` tool doesn't provide color-coding per se, but it instead formats the output in a standardized way, so that the associated representation could optionally undergo subsequent syntax highlighting via other tools, editors or IDEs, as applicable.
 
-In this section we'll briefly introduce some rudimentary color-coding to our diff output, and in subsequent sections we'll generalize our post-processing logic, which will enable us to perform the color-coding in a bit more elegant manner, as well as perform other post-processing steps, with the intention of increasing the degree of interpretability of the output.
+In this section we'll briefly introduce some rudimentary color-coding to our diff output, and in the following one we'll generalize our post-processing logic, which will enable us to perform color-coding in a bit more elegant manner. It'll also enable us to perform other post-processing steps, for the purpose of increasing the degree of interpretability of the output.
 
 We'll follow `git`'s diff representation, namely colorizing lines corresponding to insertions in green, and those corresponding to deletions - in red. Please, note that this doesn't take any special consideration of terminal emulator themes, nor any other external context.
 
-Practically speaking, terminal output colorization is achieved via what are referred to as ANSI escape codes. We prepend a sequence of characters before the line to denote that we want a foreground color to be applied to all characters on that line. In order to preserve the formatting on lines where the same diff operation doesn't apply, we append an escape code for resetting the formatting at the end of each colorized line, namely `"\u(001b)[0m"`. Correspondingly, the escape codes for green and red foreground color are `"\u(001b)[6;33;32m"` and `"\u(001b)[6;33;31m"`.
+Practically speaking, terminal output colorization is achieved via what are referred to as ANSI escape codes. We prepend a sequence of characters to the line to denote that we want a foreground color to be applied to all characters on that line. In order to preserve the formatting on lines where the same diff operation doesn't apply, we append an escape code for resetting the formatting at the end of each colorized line, namely `"\u(001b)[0m"`. The escape codes for green and red foreground colors are `"\u(001b)[6;33;32m"` and `"\u(001b)[6;33;31m"`, respectively.
 
 For further details, please, refer to the "Colors" section of Wikipedia's "ANSI escape code" page[^1]. Now let's implement a simple text colorization function.
 
@@ -419,7 +418,7 @@ colorizeText = \color, input ->
         RedFg -> "$(red)$(input)$(resetFormatting)"
 ```
 
-And just like this, we're able to arbitrarily apply colors to text. Now, we can actually color-code our diff operations - insertion in green and deletion in red. Please, note that the color choices are arbitrary in this case. It would be equally seamless to colorize the background of each line, i.e., achieve some sort of highlighting, via employing `"\u(001b)[6;33;42m"` and `"\u(001b)[6;33;41m"` for green and red, correspondingly. This is because background colors span over the 40 to 48 escape-code range.
+And just like this, we're able to arbitrarily apply colors to text. Our diff operations are color-coded - insertions in green and deletions in red. Please, note that the color choices are arbitrary in this case. It would be equally seamless to colorize the background of each line, i.e., achieve some sort of highlighting, via employing `"\u(001b)[6;33;42m"` and `"\u(001b)[6;33;41m"` for green and red, correspondingly. This is because background colors span over the 40 to 48 escape-code range.
 
 ```roc
     else if j > 0 && (i == 0 || left >= up) then
@@ -428,7 +427,7 @@ And just like this, we're able to arbitrarily apply colors to text. Now, we can 
         List.append (diffHelp lcs x y (i - 1) j) (colorizeText RedFg "- $(xi)")
 ```
 
-Putting our `colorizeText` function to use in our `diffHelp` function, we're now able to associate our colorization preferences to the insertion and deletion operations.
+By putting our `colorizeText` function to use in our `diffHelp` function, we're now able to associate our colorization preferences to the insertion and deletion operations.
 
 ## Section N.4: Diff Context
 
