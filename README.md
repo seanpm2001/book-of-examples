@@ -40,7 +40,7 @@ so that you can `git pull upstream main` periodically to stay up to date with ch
 | Sophie Collard     | sophiecollard      | property-based testing    | proptest   |
 | Ashley Davis       | ashleydavis        | thumbnail gallery         | gallery    |
 | Eli Dowling        | faldor20           | autocompletion            | completion |
-| Kyril Dziamura     | wontem             | file backup               | backup     |
+| *unclaimed*        | *unclaimed*        | file backup               | backup     |
 | Hristo Georgiev    | hristog            | file diffing              | diff       |
 | Norbert Hajagos    | HajagosNorbert     | file transfer             | ftp        |
 | Norbert Hajagos    | HajagosNorbert     | discrete event simulation | des        |

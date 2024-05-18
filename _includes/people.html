@@ -12,7 +12,7 @@ Fill the array with hyperlinked authors' names.
 {%- endcomment -%}
 {%- for ident in include.githubs -%}
   {%- assign temp = site.data.contrib | find: "github", ident -%}
-  {%- capture name -%}<a href="https://github.com/{{ temp.github }}">{{ temp.personal }} {{ temp.family }}</a>{%- endcapture -%}
+  {%- capture name -%}{% if temp.github != "unclaimed" %}<a href="https://github.com/{{ temp.github }}">{% endif %}{{ temp.personal }} {{ temp.family }}{% if temp.github != "unclaimed" %}</a>{% endif %}{%- endcapture -%}
   {%- assign authors = authors | push: name -%}
 {%- endfor -%}
 
